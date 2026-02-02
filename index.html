@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +9,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.2/index.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.2/index.full.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -22,32 +25,38 @@
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
+
         .header {
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
         }
+
         .section {
             margin-bottom: 30px;
             padding: 20px;
             border: 1px solid #eee;
             border-radius: 8px;
         }
+
         .section-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 15px;
             color: #333;
         }
+
         .form-item {
             margin-bottom: 15px;
         }
+
         .form-label {
             display: block;
             margin-bottom: 5px;
             font-weight: 500;
         }
+
         .form-input {
             width: 100%;
             padding: 8px 12px;
@@ -55,13 +64,16 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+
         .form-checkbox {
             margin-right: 10px;
         }
+
         .btn-group {
             text-align: center;
             margin-top: 30px;
         }
+
         .btn {
             padding: 12px 30px;
             margin: 0 10px;
@@ -70,26 +82,32 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         .btn-primary {
             background-color: #409eff;
             color: white;
         }
+
         .btn-secondary {
             background-color: #67c23a;
             color: white;
         }
+
         .array-item {
             display: flex;
             margin-bottom: 10px;
         }
+
         .array-input {
             flex: 1;
             margin-right: 10px;
         }
+
         .array-actions {
             display: flex;
             align-items: center;
         }
+
         .array-btn {
             margin-left: 5px;
             padding: 5px 10px;
@@ -97,14 +115,17 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         .remove-btn {
             background-color: #f56c6c;
             color: white;
         }
+
         .add-btn {
             background-color: #67c23a;
             color: white;
         }
+
         .help-icon {
             margin-left: 5px;
             color: #909399;
@@ -133,6 +154,7 @@
         }
     </script>
 </head>
+
 <body>
     <!-- Mini App 信息区域 (初始隐藏，由 JavaScript 控制显示) -->
 
@@ -143,31 +165,40 @@
                     <div class="section-title">Mini App 信息</div>
                     <div class="form-item">
                         <label class="form-label"><strong>初始化数据:</strong></label>
-                        <div id="init-data-display" class="form-input" style="background-color: #f9f9f9; min-height: auto; word-break: break-all; white-space: pre-wrap;">N/A</div>
+                        <div id="init-data-display" class="form-input"
+                            style="background-color: #f9f9f9; min-height: auto; word-break: break-all; white-space: pre-wrap;">
+                            N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>用户数据:</strong></label>
-                        <div id="user-data-display" class="form-input" style="background-color: #f9f9f9; min-height: auto; word-break: break-all; white-space: pre-wrap;">N/A</div>
+                        <div id="user-data-display" class="form-input"
+                            style="background-color: #f9f9f9; min-height: auto; word-break: break-all; white-space: pre-wrap;">
+                            N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>平台:</strong></label>
-                        <div id="platform-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">N/A</div>
+                        <div id="platform-display" class="form-input"
+                            style="background-color: #f9f9f9; min-height: auto;">N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>版本:</strong></label>
-                        <div id="version-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">N/A</div>
+                        <div id="version-display" class="form-input"
+                            style="background-color: #f9f9f9; min-height: auto;">N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>语言:</strong></label>
-                        <div id="lang-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">N/A</div>
+                        <div id="lang-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">
+                            N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>主题颜色:</strong></label>
-                        <div id="theme-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">N/A</div>
+                        <div id="theme-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">
+                            N/A</div>
                     </div>
                     <div class="form-item">
                         <label class="form-label"><strong>启动参数:</strong></label>
-                        <div id="start-param-display" class="form-input" style="background-color: #f9f9f9; min-height: auto;">N/A</div>
+                        <div id="start-param-display" class="form-input"
+                            style="background-color: #f9f9f9; min-height: auto;">N/A</div>
                     </div>
                 </div>
             </div>
@@ -175,23 +206,26 @@
                 <h1>Koipy 配置管理</h1>
                 <p>Telegram Mini App</p>
             </div>
-            
+
             <div v-if="loading" style="text-align: center; padding: 50px;">
                 <p>加载中...</p>
             </div>
-            
+
             <div v-else>
                 <!-- 基本配置 -->
                 <div class="section">
                     <div class="section-title">基本配置</div>
                     <div class="form-item">
-                        <label class="form-label">激活码 (license) <el-tooltip content="激活码，必填，否则无法使用。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">激活码 (license) <el-tooltip content="激活码，必填，否则无法使用。" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model="config.license" class="form-input" type="text" placeholder="输入激活码">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">管理员 (admin) <el-tooltip content="管理员，可以不填，不填删掉。首次启动自动设置管理员。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">管理员 (admin) <el-tooltip content="管理员，可以不填，不填删掉。首次启动自动设置管理员。"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <div v-for="(admin, index) in config.admin" :key="index" class="array-item">
-                            <input v-model="config.admin[index]" class="form-input array-input" type="text" placeholder="管理员ID">
+                            <input v-model="config.admin[index]" class="form-input array-input" type="text"
+                                placeholder="管理员ID">
                             <div class="array-actions">
                                 <button class="array-btn remove-btn" @click="removeAdmin(index)">-</button>
                             </div>
@@ -199,65 +233,89 @@
                         <button class="array-btn add-btn" @click="addAdmin">+ 添加管理员</button>
                     </div>
                 </div>
-                
+
                 <!-- 网络配置 -->
                 <div class="section">
                     <div class="section-title">网络配置</div>
                     <div class="form-item">
-                        <label class="form-label">HTTP代理 (httpProxy) <el-tooltip content="http代理，如果设置的话，bot会用这个拉取订阅" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model="config.network.httpProxy" class="form-input" type="text" placeholder="http://host:port">
+                        <label class="form-label">HTTP代理 (httpProxy) <el-tooltip content="http代理，如果设置的话，bot会用这个拉取订阅"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model="config.network.httpProxy" class="form-input" type="text"
+                            placeholder="http://host:port">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">SOCKS5代理 (socks5Proxy) <el-tooltip content="socks5代理， bot的代理在下面bot那一栏填" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model="config.network.socks5Proxy" class="form-input" type="text" placeholder="socks5://host:port">
+                        <label class="form-label">SOCKS5代理 (socks5Proxy) <el-tooltip
+                                content="socks5代理， bot的代理在下面bot那一栏填" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip></label>
+                        <input v-model="config.network.socks5Proxy" class="form-input" type="text"
+                            placeholder="socks5://host:port">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">User-Agent <el-tooltip content="UA设置，影响订阅获取" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model="config.network.userAgent" class="form-input" type="text" placeholder="User-Agent">
+                        <label class="form-label">User-Agent <el-tooltip content="UA设置，影响订阅获取" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model="config.network.userAgent" class="form-input" type="text"
+                            placeholder="User-Agent">
                     </div>
                 </div>
-                
+
                 <!-- Bot配置 -->
                 <div class="section">
                     <div class="section-title">Bot配置</div>
                     <div class="form-item">
-                        <label class="form-label">Bot Token <el-tooltip content="bot的token, 首次启动必填" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">Bot Token <el-tooltip content="bot的token, 首次启动必填" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model="config.bot['bot-token']" class="form-input" type="text" placeholder="Bot Token">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">API ID <el-tooltip content="telegram的 api_id 可选，想用自己的api可以填，默认内置" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">API ID <el-tooltip content="telegram的 api_id 可选，想用自己的api可以填，默认内置"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model="config.bot['api-id']" class="form-input" type="text" placeholder="API ID">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">API Hash <el-tooltip content="telegram的 api_hash 可选，想用自己的api可以填，默认内置" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">API Hash <el-tooltip content="telegram的 api_hash 可选，想用自己的api可以填，默认内置"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model="config.bot['api-hash']" class="form-input" type="text" placeholder="API Hash">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">Bot代理 (proxy) <el-tooltip content="bot的代理设置，推荐socks5代理，http代理也可以，目前仅支持这两种代理" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model="config.bot.proxy" class="form-input" type="text" placeholder="socks5://127.0.0.1:11112">
+                        <label class="form-label">Bot代理 (proxy) <el-tooltip
+                                content="bot的代理设置，推荐socks5代理，http代理也可以，目前仅支持这两种代理" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model="config.bot.proxy" class="form-input" type="text"
+                            placeholder="socks5://127.0.0.1:11112">
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.bot.ipv6" class="form-checkbox" type="checkbox"> 使用IPv6连接 <el-tooltip content="是否使用ipv6连接" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.bot.ipv6" class="form-checkbox" type="checkbox"> 使用IPv6连接 <el-tooltip
+                                content="是否使用ipv6连接" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.bot.antiGroup" class="form-checkbox" type="checkbox"> 防拉群模式 <el-tooltip content="是否开启防拉群模式，默认false" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.bot.antiGroup" class="form-checkbox" type="checkbox"> 防拉群模式
+                            <el-tooltip content="是否开启防拉群模式，默认false" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.bot.strictMode" class="form-checkbox" type="checkbox"> 严格模式 <el-tooltip content="严格模式，在此模式下，bot的所有按钮只能触发消息对话的那个人点，否则是全体用户权限均可点击。默认false" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.bot.strictMode" class="form-checkbox" type="checkbox"> 严格模式
+                            <el-tooltip content="严格模式，在此模式下，bot的所有按钮只能触发消息对话的那个人点，否则是全体用户权限均可点击。默认false" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.bot.bypassMode" class="form-checkbox" type="checkbox"> 旁路模式 <el-tooltip content="是否将bot设置为旁路模式，设置为旁路模式后，bot原本内置的所有指令都将失效。取而代之仅生效下面bot.commands配置的指令。关于旁路模式有什么用，请查阅在线文档。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.bot.bypassMode" class="form-checkbox" type="checkbox"> 旁路模式
+                            <el-tooltip
+                                content="是否将bot设置为旁路模式，设置为旁路模式后，bot原本内置的所有指令都将失效。取而代之仅生效下面bot.commands配置的指令。关于旁路模式有什么用，请查阅在线文档。"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">解析模式 (parseMode) <el-tooltip content="bot的文本解析模式，可选值如下： [DEFAULT, MARKDOWN, HTML, DISABLED]" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">解析模式 (parseMode) <el-tooltip
+                                content="bot的文本解析模式，可选值如下： [DEFAULT, MARKDOWN, HTML, DISABLED]" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <select v-model="config.bot.parseMode" class="form-input">
                             <option value="DEFAULT">DEFAULT</option>
                             <option value="MARKDOWN">MARKDOWN</option>
@@ -266,17 +324,25 @@
                         </select>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">缓存时间 (cacheTime) <el-tooltip content="订阅缓存的最大时长，默认60秒。一个订阅不会重复拉取，在60秒内使用缓存值，超过60秒重新获取。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">缓存时间 (cacheTime) <el-tooltip
+                                content="订阅缓存的最大时长，默认60秒。一个订阅不会重复拉取，在60秒内使用缓存值，超过60秒重新获取。" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model.number="config.bot.cacheTime" class="form-input" type="number" placeholder="60">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">响应限制 (echoLimit) <el-tooltip content="限制响应速度，单位秒，默认0.8秒，即bot每0.8秒最多响应一条消息。每0.8/2秒内按钮最多响应一次" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model.number="config.bot.echoLimit" class="form-input" type="number" step="0.1" placeholder="0.8">
+                        <label class="form-label">响应限制 (echoLimit) <el-tooltip
+                                content="限制响应速度，单位秒，默认0.8秒，即bot每0.8秒最多响应一条消息。每0.8/2秒内按钮最多响应一次" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model.number="config.bot.echoLimit" class="form-input" type="number" step="0.1"
+                            placeholder="0.8">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">邀请组 (inviteGroup) <el-tooltip content="invite指令权限覆写群组白名单，写上对应群组id，那个群所有人都将可以使用/invite指令，默认只能用户权限使用。 群组id以-100开头" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">邀请组 (inviteGroup) <el-tooltip
+                                content="invite指令权限覆写群组白名单，写上对应群组id，那个群所有人都将可以使用/invite指令，默认只能用户权限使用。 群组id以-100开头"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <div v-for="(group, index) in config.bot.inviteGroup" :key="index" class="array-item">
-                            <input v-model="config.bot.inviteGroup[index]" class="form-input array-input" type="text" placeholder="群组ID">
+                            <input v-model="config.bot.inviteGroup[index]" class="form-input array-input" type="text"
+                                placeholder="群组ID">
                             <div class="array-actions">
                                 <button class="array-btn remove-btn" @click="removeInviteGroup(index)">-</button>
                             </div>
@@ -284,9 +350,12 @@
                         <button class="array-btn add-btn" @click="addInviteGroup">+ 添加群组</button>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">邀请黑名单URL (inviteBlacklistURL) <el-tooltip content="邀请测试里禁止测试的URL链接远程更新地址，多个用逗号隔开。样例： https://raw.githubusercontent.com/koipy-org/koihub/master/proxypool_url.txt" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">邀请黑名单URL (inviteBlacklistURL) <el-tooltip
+                                content="邀请测试里禁止测试的URL链接远程更新地址，多个用逗号隔开。样例： https://raw.githubusercontent.com/koipy-org/koihub/master/proxypool_url.txt"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <div v-for="(url, index) in config.bot.inviteBlacklistURL" :key="index" class="array-item">
-                            <input v-model="config.bot.inviteBlacklistURL[index]" class="form-input array-input" type="text" placeholder="黑名单URL">
+                            <input v-model="config.bot.inviteBlacklistURL[index]" class="form-input array-input"
+                                type="text" placeholder="黑名单URL">
                             <div class="array-actions">
                                 <button class="array-btn remove-btn" @click="removeInviteBlacklistURL(index)">-</button>
                             </div>
@@ -294,70 +363,93 @@
                         <button class="array-btn add-btn" @click="addInviteBlacklistURL">+ 添加URL</button>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">邀请黑名单域名 (inviteBlacklistDomain) <el-tooltip content="邀请测试里禁止测试包含的域名远程更新地址，多个用逗号隔开。样例：https://raw.githubusercontent.com/koipy-org/koihub/master/proxypool_domain.txt" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <div v-for="(domain, index) in config.bot.inviteBlacklistDomain" :key="index" class="array-item">
-                            <input v-model="config.bot.inviteBlacklistDomain[index]" class="form-input array-input" type="text" placeholder="黑名单域名">
+                        <label class="form-label">邀请黑名单域名 (inviteBlacklistDomain) <el-tooltip
+                                content="邀请测试里禁止测试包含的域名远程更新地址，多个用逗号隔开。样例：https://raw.githubusercontent.com/koipy-org/koihub/master/proxypool_domain.txt"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <div v-for="(domain, index) in config.bot.inviteBlacklistDomain" :key="index"
+                            class="array-item">
+                            <input v-model="config.bot.inviteBlacklistDomain[index]" class="form-input array-input"
+                                type="text" placeholder="黑名单域名">
                             <div class="array-actions">
-                                <button class="array-btn remove-btn" @click="removeInviteBlacklistDomain(index)">-</button>
+                                <button class="array-btn remove-btn"
+                                    @click="removeInviteBlacklistDomain(index)">-</button>
                             </div>
                         </div>
                         <button class="array-btn add-btn" @click="addInviteBlacklistDomain">+ 添加域名</button>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.bot.autoResetCommands" class="form-checkbox" type="checkbox"> 自动重置指令 <el-tooltip content="是否自动重置bot指令，默认false。开启后，每次启动时会清除原来固定在TG前端的指令" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.bot.autoResetCommands" class="form-checkbox" type="checkbox"> 自动重置指令
+                            <el-tooltip content="是否自动重置bot指令，默认false。开启后，每次启动时会清除原来固定在TG前端的指令" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                 </div>
-                
+
                 <!-- 指令配置 -->
                 <div class="section">
                     <div class="section-title">指令配置</div>
-                    <div v-for="(command, index) in config.bot.commands" :key="index" class="section" style="margin-bottom: 20px;">
+                    <div v-for="(command, index) in config.bot.commands" :key="index" class="section"
+                        style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h4>指令 {{ index + 1 }}</h4>
                             <button class="array-btn remove-btn" @click="removeCommand(index)">删除</button>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">名称 (name) <el-tooltip content="指令名称" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">名称 (name) <el-tooltip content="指令名称" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="command.name" class="form-input" type="text" placeholder="指令名称">
                         </div>
                         <div class="form-item">
-                            <label class="form-label">标题 (title) <el-tooltip content="绘图时任务标题" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">标题 (title) <el-tooltip content="绘图时任务标题" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="command.title" class="form-input" type="text" placeholder="绘图时任务标题">
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="command.enable" class="form-checkbox" type="checkbox"> 启用指令 <el-tooltip content="是否启用该指令， 默认true。未启用时，无法使用该指令。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="command.enable" class="form-checkbox" type="checkbox"> 启用指令 <el-tooltip
+                                    content="是否启用该指令， 默认true。未启用时，无法使用该指令。" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">规则 (rule) <el-tooltip content="将该指令升级为测试指令，写对应的规则名，会读取你配置好的规则，读取不到则判定该指令为普通指令，而非测试指令。普通指令相当于 /help /version 这些，等于仅修改描述文本，而无实际测试功能" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">规则 (rule) <el-tooltip
+                                    content="将该指令升级为测试指令，写对应的规则名，会读取你配置好的规则，读取不到则判定该指令为普通指令，而非测试指令。普通指令相当于 /help /version 这些，等于仅修改描述文本，而无实际测试功能"
+                                    placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
                             <input v-model="command.rule" class="form-input" type="text" placeholder="规则名称">
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="command.pin" class="form-checkbox" type="checkbox"> 固定指令 <el-tooltip content="是否固定指令，固定指令后会始终显示在TG客户端的指令列表中，默认false" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="command.pin" class="form-checkbox" type="checkbox"> 固定指令 <el-tooltip
+                                    content="是否固定指令，固定指令后会始终显示在TG客户端的指令列表中，默认false" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">文本 (text) <el-tooltip content="指令的提示文本，默认空时自动使用name的值" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">文本 (text) <el-tooltip content="指令的提示文本，默认空时自动使用name的值"
+                                    placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
                             <input v-model="command.text" class="form-input" type="text" placeholder="指令提示文本">
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="command.attachToInvite" class="form-checkbox" type="checkbox"> 附加到邀请指令 <el-tooltip content="是否附加到invite指令中选择的按钮，让invite也能享受到此规则背后的script选择，默认true" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="command.attachToInvite" class="form-checkbox" type="checkbox"> 附加到邀请指令
+                                <el-tooltip content="是否附加到invite指令中选择的按钮，让invite也能享受到此规则背后的script选择，默认true"
+                                    placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                     </div>
                     <button class="array-btn add-btn" @click="addCommand">+ 添加指令</button>
                 </div>
-                
+
                 <!-- 图像配置 -->
                 <div class="section">
                     <div class="section-title">图像配置</div>
                     <div class="form-item">
-                        <label class="form-label">速度格式 (speedFormat) <el-tooltip content="速度结果绘图格式，共有以下可用值： ['byte/binary', 'byte/decimal', 'bit/binary', 'bit/decimal'] 具体解释请查看文档" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">速度格式 (speedFormat) <el-tooltip
+                                content="速度结果绘图格式，共有以下可用值： ['byte/binary', 'byte/decimal', 'bit/binary', 'bit/decimal'] 具体解释请查看文档"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <select v-model="config.image.speedFormat" class="form-input">
                             <option value="byte/binary">byte/binary</option>
                             <option value="byte/decimal">byte/decimal</option>
@@ -367,61 +459,84 @@
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.image.compress" class="form-checkbox" type="checkbox"> 压缩图像 <el-tooltip content="是否压缩" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.image.compress" class="form-checkbox" type="checkbox"> 压缩图像
+                            <el-tooltip content="是否压缩" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.image.save" class="form-checkbox" type="checkbox"> 保存图像到本地 <el-tooltip content="是否保存图片到本地，设置为false时，图片将不会保存到本地，默认保存到本地备份(true)" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.image.save" class="form-checkbox" type="checkbox"> 保存图像到本地
+                            <el-tooltip content="是否保存图片到本地，设置为false时，图片将不会保存到本地，默认保存到本地备份(true)" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">绘图标题 <el-tooltip content="绘图标题" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">绘图标题 <el-tooltip content="绘图标题" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <input v-model="config.image.title" class="form-input" type="text" placeholder="节点测试机器人">
                     </div>
                 </div>
-                
+
                 <!-- 运行时配置 -->
                 <div class="section">
                     <div class="section-title">运行时配置</div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.entrance" class="form-checkbox" type="checkbox"> 显示入口IP段 <el-tooltip content="是否显示入口IP段" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.entrance" class="form-checkbox" type="checkbox"> 显示入口IP段
+                            <el-tooltip content="是否显示入口IP段" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">测速时长 (duration) <el-tooltip content="测速时长，优先级高于后端单独设置的测速时长" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model.number="config.runtime.duration" class="form-input" type="number" placeholder="10">
+                        <label class="form-label">测速时长 (duration) <el-tooltip content="测速时长，优先级高于后端单独设置的测速时长"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model.number="config.runtime.duration" class="form-input" type="number"
+                            placeholder="10">
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.ipstack" class="form-checkbox" type="checkbox"> 启用双栈检测 <el-tooltip content="是否启用双栈检测" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.ipstack" class="form-checkbox" type="checkbox"> 启用双栈检测
+                            <el-tooltip content="是否启用双栈检测" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.localip" class="form-checkbox" type="checkbox"> 本地IP <el-tooltip content="暂时无用" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.localip" class="form-checkbox" type="checkbox"> 本地IP
+                            <el-tooltip content="暂时无用" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.nospeed" class="form-checkbox" type="checkbox"> 无速度测试 <el-tooltip content="暂时无用" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.nospeed" class="form-checkbox" type="checkbox"> 无速度测试
+                            <el-tooltip content="暂时无用" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
-                        <label class="form-label">延迟测试地址 (pingURL) <el-tooltip content="延迟测试地址" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model="config.runtime.pingURL" class="form-input" type="text" placeholder="https://www.gstatic.com/generate_204">
+                        <label class="form-label">延迟测试地址 (pingURL) <el-tooltip content="延迟测试地址" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model="config.runtime.pingURL" class="form-input" type="text"
+                            placeholder="https://www.gstatic.com/generate_204">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">最大测速节点数量 (speedNodes) <el-tooltip content="最大测速节点数量" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model.number="config.runtime.speedNodes" class="form-input" type="number" placeholder="300">
+                        <label class="form-label">最大测速节点数量 (speedNodes) <el-tooltip content="最大测速节点数量" placement="top"
+                                :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model.number="config.runtime.speedNodes" class="form-input" type="number"
+                            placeholder="300">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">后端测速线程数量 (speedThreads) <el-tooltip content="后端测速线程数量，优先级高于后端单独设置的" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
-                        <input v-model.number="config.runtime.speedThreads" class="form-input" type="number" placeholder="4">
+                        <label class="form-label">后端测速线程数量 (speedThreads) <el-tooltip content="后端测速线程数量，优先级高于后端单独设置的"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <input v-model.number="config.runtime.speedThreads" class="form-input" type="number"
+                            placeholder="4">
                     </div>
                     <div class="form-item">
-                        <label class="form-label">输出类型 (output) <el-tooltip content="输出类型，目前支持 image 和 json 和 video 三种，其中video如果你用的不是docker镜像启动的，需要自己单独安装 ffmepg，然后设置好 ffmepg 的环境变量" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                        <label class="form-label">输出类型 (output) <el-tooltip
+                                content="输出类型，目前支持 image 和 json 和 video 三种，其中video如果你用的不是docker镜像启动的，需要自己单独安装 ffmepg，然后设置好 ffmepg 的环境变量"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                         <select v-model="config.runtime.output" class="form-input">
                             <option value="image">image</option>
                             <option value="json">json</option>
@@ -430,76 +545,99 @@
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.realtime" class="form-checkbox" type="checkbox"> 实时渲染 <el-tooltip content="是否实时渲染测试结果" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.realtime" class="form-checkbox" type="checkbox"> 实时渲染
+                            <el-tooltip content="是否实时渲染测试结果" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.disableSubCvt" class="form-checkbox" type="checkbox"> 禁用订阅转换 <el-tooltip content="是否针对单次测试禁用订阅转换，默认false。开启后，假如全局订阅转换开启，则单次测试不会进行订阅转换。配合rule或者指令参数使用" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.disableSubCvt" class="form-checkbox" type="checkbox"> 禁用订阅转换
+                            <el-tooltip content="是否针对单次测试禁用订阅转换，默认false。开启后，假如全局订阅转换开启，则单次测试不会进行订阅转换。配合rule或者指令参数使用"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                     <div class="form-item">
                         <label class="form-label">
-                            <input v-model="config.runtime.protectContent" class="form-checkbox" type="checkbox"> 保护内容 <el-tooltip content="bot输出的所有图片设置为保护内容，默认false。设置为 true后，bot输出的图片不允许进行转发，复制。" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                            <input v-model="config.runtime.protectContent" class="form-checkbox" type="checkbox"> 保护内容
+                            <el-tooltip content="bot输出的所有图片设置为保护内容，默认false。设置为 true后，bot输出的图片不允许进行转发，复制。"
+                                placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
                         </label>
                     </div>
                 </div>
-                
+
                 <!-- 后端配置 -->
                 <div class="section">
                     <div class="section-title">后端配置</div>
-                    <div v-for="(slave, index) in config.slaveConfig.slaves" :key="index" class="section" style="margin-bottom: 20px;">
+                    <div v-for="(slave, index) in config.slaveConfig.slaves" :key="index" class="section"
+                        style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h4>后端 {{ index + 1 }}</h4>
                             <button class="array-btn remove-btn" @click="removeSlave(index)">删除</button>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">类型 (type) <el-tooltip content="固定值，目前只这个支持" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">类型 (type) <el-tooltip content="固定值，目前只这个支持" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.type" class="form-input" type="text" value="miaospeed" readonly>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">ID <el-tooltip content="后端id" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">ID <el-tooltip content="后端id" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.id" class="form-input" type="text" placeholder="后端ID">
                         </div>
                         <div class="form-item">
-                            <label class="form-label">Token <el-tooltip content="连接密码" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">Token <el-tooltip content="连接密码" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.token" class="form-input" type="text" placeholder="连接密码">
                         </div>
                         <div class="form-item">
-                            <label class="form-label">地址 (address) <el-tooltip content="后端地址" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">地址 (address) <el-tooltip content="后端地址" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.address" class="form-input" type="text" placeholder="127.0.0.1:8765">
                         </div>
                         <div class="form-item">
-                            <label class="form-label">路径 (path) <el-tooltip content="websocket的连接路径，只有路径正确才能正确连接，请填写复杂的路径，防止路径被爆破。可以有效避免miaospeed服务被网络爬虫扫描到." placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">路径 (path) <el-tooltip
+                                    content="websocket的连接路径，只有路径正确才能正确连接，请填写复杂的路径，防止路径被爆破。可以有效避免miaospeed服务被网络爬虫扫描到."
+                                    placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.path" class="form-input" type="text" placeholder="/">
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="slave.skipCertVerify" class="form-checkbox" type="checkbox"> 跳过证书验证 <el-tooltip content="跳过证书验证，如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="slave.skipCertVerify" class="form-checkbox" type="checkbox"> 跳过证书验证
+                                <el-tooltip content="跳过证书验证，如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="slave.tls" class="form-checkbox" type="checkbox"> 启用加密连接 <el-tooltip content="启用加密连接，如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="slave.tls" class="form-checkbox" type="checkbox"> 启用加密连接 <el-tooltip
+                                    content="启用加密连接，如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                         <div class="form-item">
-                            <label class="form-label">备注 (comment) <el-tooltip content="后端备注，显示在bot页面的" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <label class="form-label">备注 (comment) <el-tooltip content="后端备注，显示在bot页面的" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
                             <input v-model="slave.comment" class="form-input" type="text" placeholder="后端备注">
                         </div>
                         <div class="form-item">
                             <label class="form-label">
-                                <input v-model="slave.hidden" class="form-checkbox" type="checkbox"> 隐藏后端 <el-tooltip content="是否隐藏此后端" placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip>
+                                <input v-model="slave.hidden" class="form-checkbox" type="checkbox"> 隐藏后端 <el-tooltip
+                                    content="是否隐藏此后端" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
                     </div>
                     <button class="array-btn add-btn" @click="addSlave">+ 添加后端</button>
                 </div>
-                
+
                 <!-- 操作按钮 -->
                 <div class="btn-group">
-                    <button class="btn btn-primary" @click="saveConfig">保存配置</button>
+                    <button class="btn btn-primary" :loading="saving" @click="saveConfig">保存配置</button>
                     <button class="btn btn-secondary" @click="exportConfig">导出配置</button>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;" v-if="saveMessage">{{ saveMessage }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -508,23 +646,25 @@
     <script>
         const { createApp, ref, onMounted } = Vue;
         const { ElMessage, ElTooltip } = ElementPlus;
-        
+
         createApp({
             setup() {
                 const loading = ref(true);
+                const saving = ref(false);
+                const saveMessage = ref("");
                 const config = ref({
-                    license: "YOUR_LICENSE_CODE",
-                    admin: [12345678],
+                    license: "",
+                    admin: [],
                     network: {
                         httpProxy: "",
                         socks5Proxy: "",
-                        userAgent: "ClashMetaForAndroid/2.8.9.Meta Mihomo/0.16"
+                        userAgent: ""
                     },
                     bot: {
-                        "bot-token": null,
+                        "bot-token": "",
                         "api-id": "",
                         "api-hash": "",
-                        proxy: "socks5://127.0.0.1:11112",
+                        proxy: "",
                         ipv6: false,
                         antiGroup: false,
                         strictMode: false,
@@ -536,29 +676,13 @@
                         inviteBlacklistURL: [],
                         inviteBlacklistDomain: [],
                         autoResetCommands: false,
-                        commands: [
-                            {
-                                name: "ping",
-                                title: "PING测试",
-                                enable: true,
-                                rule: "ping",
-                                pin: true,
-                                text: "",
-                                attachToInvite: true
-                            },
-                            {
-                                name: "nf",
-                                rule: "nf",
-                                enable: true,
-                                pin: false
-                            }
-                        ]
+                        commands: []
                     },
                     image: {
                         speedFormat: "byte/decimal",
                         compress: false,
                         save: true,
-                        title: "节点测试机器人"
+                        title: ""
                     },
                     runtime: {
                         entrance: true,
@@ -566,10 +690,8 @@
                         ipstack: true,
                         localip: false,
                         nospeed: false,
-                        pingURL: "https://www.gstatic.com/generate_204",
-                        speedFiles: [
-                            "https://dl.google.com/dl/android/studio/install/3.4.1.0/android-studio-ide-183.5522156-windows.exe"
-                        ],
+                        pingURL: "",
+                        speedFiles: [],
                         speedNodes: 300,
                         speedThreads: 4,
                         output: "image",
@@ -584,43 +706,31 @@
                             autoHideOnFailure: false
                         },
                         showID: true,
-                        slaves: [
-                            {
-                                type: "miaospeed",
-                                id: "localmiaospeed",
-                                token: "ZfffaQ4/E-7S",
-                                address: "127.0.0.1:8765",
-                                path: "/",
-                                skipCertVerify: true,
-                                tls: true,
-                                invoker: "1114514",
-                                buildtoken: "MIAOKO4|580JxAo049R|GEnERAl|1X571R930|T0kEN",
-                                comment: "本地miaospeed后端",
-                                hidden: false
-                            }
-                        ]
+                        slaves: []
                     }
                 });
-                
+
                 // 加载配置
                 const loadConfig = () => {
                     // 在实际应用中，这里会从服务器加载配置
                     // 模拟加载延迟
                     setTimeout(() => {
                         loading.value = false;
+                        // 注意：这里仍然是空配置，用户需要手动粘贴或从Bot导入（如果实现的话）
+                        // 为了演示方便，我们不填入假数据，保留空结构
                     }, 500);
                 };
-                
+
                 // 添加管理员
                 const addAdmin = () => {
                     config.value.admin.push("");
                 };
-                
+
                 // 删除管理员
                 const removeAdmin = (index) => {
                     config.value.admin.splice(index, 1);
                 };
-                
+
                 // 添加指令
                 const addCommand = () => {
                     config.value.bot.commands.push({
@@ -633,12 +743,12 @@
                         attachToInvite: true
                     });
                 };
-                
+
                 // 删除指令
                 const removeCommand = (index) => {
                     config.value.bot.commands.splice(index, 1);
                 };
-                
+
                 // 添加后端
                 const addSlave = () => {
                     config.value.slaveConfig.slaves.push({
@@ -653,12 +763,12 @@
                         hidden: false
                     });
                 };
-                
+
                 // 删除后端
                 const removeSlave = (index) => {
                     config.value.slaveConfig.slaves.splice(index, 1);
                 };
-                
+
                 // 添加邀请组
                 const addInviteGroup = () => {
                     if (!config.value.bot.inviteGroup) {
@@ -666,12 +776,12 @@
                     }
                     config.value.bot.inviteGroup.push("");
                 };
-                
+
                 // 删除邀请组
                 const removeInviteGroup = (index) => {
                     config.value.bot.inviteGroup.splice(index, 1);
                 };
-                
+
                 // 添加邀请黑名单URL
                 const addInviteBlacklistURL = () => {
                     if (!config.value.bot.inviteBlacklistURL) {
@@ -679,12 +789,12 @@
                     }
                     config.value.bot.inviteBlacklistURL.push("");
                 };
-                
+
                 // 删除邀请黑名单URL
                 const removeInviteBlacklistURL = (index) => {
                     config.value.bot.inviteBlacklistURL.splice(index, 1);
                 };
-                
+
                 // 添加邀请黑名单域名
                 const addInviteBlacklistDomain = () => {
                     if (!config.value.bot.inviteBlacklistDomain) {
@@ -692,22 +802,80 @@
                     }
                     config.value.bot.inviteBlacklistDomain.push("");
                 };
-                
+
                 // 删除邀请黑名单域名
                 const removeInviteBlacklistDomain = (index) => {
                     config.value.bot.inviteBlacklistDomain.splice(index, 1);
                 };
-                
+
                 // 保存配置
-                const saveConfig = () => {
-                    // 在实际应用中，这里会将配置保存到服务器
-                    ElMessage.success('配置已保存');
-                    console.log('保存配置:', JSON.stringify(config.value, null, 2));
+                const saveConfig = async () => {
+                    if (!config.value.bot['bot-token']) {
+                        ElMessage.error('请填写 Bot Token');
+                        return;
+                    }
+
+                    saving.value = true;
+                    saveMessage.value = "正在发送配置到 Bot...";
+
+                    try {
+                        const yamlStr = jsyaml.dump(config.value);
+                        const blob = new Blob([yamlStr], { type: 'application/x-yaml' });
+
+                        let chatId = null;
+                        if (isInTelegramMiniApp()) {
+                            const tg = window.Telegram.WebApp;
+                            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                                chatId = tg.initDataUnsafe.user.id;
+                            }
+                        }
+
+                        // 如果没有获取到 chatId，尝试使用配置中的管理员 ID (取第一个)
+                        if (!chatId && config.value.admin && config.value.admin.length > 0) {
+                            chatId = config.value.admin[0];
+                        }
+
+                        if (!chatId) {
+                            throw new Error("无法获取 Chat ID，请在 Telegram 中打开");
+                        }
+
+                        const formData = new FormData();
+                        formData.append('chat_id', chatId);
+                        formData.append('document', blob, 'config.yaml');
+                        formData.append('caption', '#koipy_config_update');
+                        formData.append('disable_notification', 'true');
+
+                        // 使用 Bot Token 发送文档
+                        const botToken = config.value.bot['bot-token'];
+                        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const resData = await response.json();
+                        if (resData.ok) {
+                            ElMessage.success('配置已发送给 Bot，请等待 Bot 自动重启/重载');
+                            saveMessage.value = "配置已发送成功！Bot 将自动处理。";
+                            if (isInTelegramMiniApp()) {
+                                window.Telegram.WebApp.close();
+                            }
+                        } else {
+                            throw new Error(resData.description || '发送失败');
+                        }
+
+                    } catch (e) {
+                        console.error(e);
+                        ElMessage.error('保存失败: ' + e.message);
+                        saveMessage.value = "保存失败: " + e.message;
+                    } finally {
+                        saving.value = false;
+                    }
                 };
-                
+
                 // 导出配置
                 const exportConfig = () => {
-                    const dataStr = "data:text/yaml;charset=utf-8," + encodeURIComponent(JSON.stringify(config.value, null, 2));
+                    const yamlStr = jsyaml.dump(config.value);
+                    const dataStr = "data:text/yaml;charset=utf-8," + encodeURIComponent(yamlStr);
                     const downloadAnchorNode = document.createElement('a');
                     downloadAnchorNode.setAttribute("href", dataStr);
                     downloadAnchorNode.setAttribute("download", "config.yaml");
@@ -745,9 +913,11 @@
                         document.getElementById('mini-app-info-container').style.display = 'block';
                     }
                 });
-                
+
                 return {
                     loading,
+                    saving,
+                    saveMessage,
                     config,
                     addAdmin,
                     removeAdmin,
@@ -768,4 +938,5 @@
         }).use(ElementPlus).mount('#app');
     </script>
 </body>
+
 </html>
