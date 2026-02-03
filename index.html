@@ -207,6 +207,18 @@
                 <p>Telegram Mini App</p>
             </div>
 
+            <!-- 手动输入 Chat ID (仅在非 Mini App 环境显示) -->
+            <div v-if="!isMiniApp" class="section" style="background-color: #fffaf0; border-color: #ffe4b5;">
+                <div class="section-title" style="color: #8b4513;">调试与导出模式</div>
+                <div class="form-item">
+                    <label class="form-label">手动输入 Chat ID <el-tooltip
+                            content="在非 Telegram 环境下，需要手动输入您的 Telegram ID（私聊时Chat ID=Telegram ID） 才能向 Bot 发送配置指令。"
+                            placement="top" :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                    <input v-model="manualChatId" class="form-input" type="text" placeholder="您的 Telegram ID (数字)">
+                    <p style="font-size: 12px; color: #e6a23c; margin-top: 5px;">* 仅用于发送配置，不会保存到配置文件中</p>
+                </div>
+            </div>
+
             <div v-if="loading" style="text-align: center; padding: 50px;">
                 <p>加载中...</p>
             </div>
@@ -569,6 +581,43 @@
                 <!-- 后端配置 -->
                 <div class="section">
                     <div class="section-title">后端配置</div>
+                    <div class="form-item">
+                        <label class="form-label">
+                            <input v-model="config.slaveConfig.showID" class="form-checkbox" type="checkbox"> 显示后端ID
+                            <el-tooltip content="是否在选择后端页面展示slaveid" placement="top" :show-after="300"><span
+                                    class="help-icon">?</span></el-tooltip>
+                        </label>
+                    </div>
+
+                    <div class="section" style="margin-bottom: 20px; border-style: dashed;">
+                        <div class="section-title" style="font-size: 16px;">健康检查 (healthCheck)</div>
+                        <div class="form-item">
+                            <label class="form-label">样本数量 (numSamples) <el-tooltip
+                                    content="健康检查样本数量，单位整数次数，默认采样10次PING测试数据" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
+                            <input v-model.number="config.slaveConfig.healthCheck.numSamples" class="form-input"
+                                type="number" placeholder="10">
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">状态展示样式 (showStatusStyle) <el-tooltip
+                                    content="在后端选择页面展示状态的样式，可选值： [emoji, number, default]" placement="top"
+                                    :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                            <select v-model="config.slaveConfig.healthCheck.showStatusStyle" class="form-input">
+                                <option value="default">default (不展示)</option>
+                                <option value="emoji">emoji (展示emoji)</option>
+                                <option value="number">number (展示延迟)</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">
+                                <input v-model="config.slaveConfig.healthCheck.autoHideOnFailure" class="form-checkbox"
+                                    type="checkbox"> 失败自动隐藏
+                                <el-tooltip content="健康检查失败时是否自动隐藏后端，默认false。" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip>
+                            </label>
+                        </div>
+                    </div>
+
                     <div v-for="(slave, index) in config.slaveConfig.slaves" :key="index" class="section"
                         style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -603,6 +652,26 @@
                             <input v-model="slave.path" class="form-input" type="text" placeholder="/">
                         </div>
                         <div class="form-item">
+                            <label class="form-label">调用者 (invoker) <el-tooltip content="bot调用者，请删掉此行或者随便填一个字符串"
+                                    placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
+                            <input v-model="slave.invoker" class="form-input" type="text" placeholder="1114514">
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">编译Token (buildtoken) <el-tooltip
+                                    content="默认编译token 如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
+                            <input v-model="slave.buildtoken" class="form-input" type="text"
+                                placeholder="MIAOKO4|580JxAo049R|GEnERAl|1X571R930|T0kEN">
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">后端代理 (proxy) <el-tooltip content="为此后端设置专门的http代理（暂时仅支持http代理）"
+                                    placement="top" :show-after="300"><span
+                                        class="help-icon">?</span></el-tooltip></label>
+                            <input v-model="slave.proxy" class="form-input" type="text"
+                                placeholder="http://username:password@proxy.example.com:7890">
+                        </div>
+                        <div class="form-item">
                             <label class="form-label">
                                 <input v-model="slave.skipCertVerify" class="form-checkbox" type="checkbox"> 跳过证书验证
                                 <el-tooltip content="跳过证书验证，如果你不知道在做什么，请写此默认值" placement="top" :show-after="300"><span
@@ -628,19 +697,123 @@
                                         class="help-icon">?</span></el-tooltip>
                             </label>
                         </div>
-                    </div>
-                    <button class="array-btn add-btn" @click="addSlave">+ 添加后端</button>
-                </div>
 
-                <!-- 操作按钮 -->
-                <div class="btn-group">
-                    <button class="btn btn-primary" :loading="saving" @click="saveConfig">保存配置</button>
-                    <button class="btn btn-secondary" @click="exportConfig">导出配置</button>
-                    <div style="margin-top: 10px; font-size: 12px; color: #666;" v-if="saveMessage">{{ saveMessage }}
+                        <!-- Slave 可选配置 (Option) -->
+                        <div class="section" style="margin-top: 15px; border-style: dotted; background-color: #fafafa;">
+                            <div class="section-title" style="font-size: 14px;">高级选项 (option)</div>
+                            <div class="form-item">
+                                <label class="form-label">测试时长 (downloadDuration) <el-tooltip content="测试时长"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.downloadDuration" class="form-input" type="number"
+                                    placeholder="8">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">测速线程 (downloadThreading) <el-tooltip content="测速线程"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.downloadThreading" class="form-input" type="number"
+                                    placeholder="4">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">测速大文件 (downloadURL) <el-tooltip
+                                        content="测速大文件，有一个特殊值：DYNAMIC:ALL，表示随机选择一个下载地址" placement="top"
+                                        :show-after="300"><span class="help-icon">?</span></el-tooltip></label>
+                                <input v-model="slave.option.downloadURL" class="form-input" type="text"
+                                    placeholder="https://dl.google.com/...">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">延迟测试地址 (pingAddress) <el-tooltip content="延迟测试地址"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model="slave.option.pingAddress" class="form-input" type="text"
+                                    placeholder="https://cp.cloudflare.com/generate_204">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">平均Ping次数 (pingAverageOver) <el-tooltip content="ping多少次取平均"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.pingAverageOver" class="form-input" type="number"
+                                    placeholder="3">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">STUN地址 (stunURL) <el-tooltip content="测udp连通性的STUN地址"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model="slave.option.stunURL" class="form-input" type="text"
+                                    placeholder="udp://stunserver2025.stunprotocol.org:3478">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">任务重试 (taskRetry) <el-tooltip content="后端任务重试，单位秒(s)"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.taskRetry" class="form-input" type="number"
+                                    placeholder="3">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">任务超时 (taskTimeout) <el-tooltip content="后端任务超时判定时长，单位毫秒(ms)"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.taskTimeout" class="form-input" type="number"
+                                    placeholder="2500">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">API版本 (apiVersion) <el-tooltip content="后端Api版本，默认为1"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.apiVersion" class="form-input" type="number"
+                                    placeholder="1">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">上行测试URL (uploadURL) <el-tooltip content="apiVersion=3 独有配置"
+                                        placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model="slave.option.uploadURL" class="form-input" type="text"
+                                    placeholder="https://speed.cloudflare.com/__up">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">上行测试时长 (uploadDuration) <el-tooltip
+                                        content="apiVersion=3 独有配置" placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <input v-model.number="slave.option.uploadDuration" class="form-input" type="number"
+                                    placeholder="8">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">上行测试线程 (uploadThreading) <el-tooltip
+                                        content="apiVersion=3 独有配置" placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></label>
+                                <input v-model.number="slave.option.uploadThreading" class="form-input" type="number"
+                                    placeholder="4">
+                            </div>
+                            <div class="form-item">
+                                <label class="form-label">DNS服务器 (dnsServer) <el-tooltip
+                                        content="后端指定dns服务器，解析节点域名时会用到。" placement="top" :show-after="300"><span
+                                            class="help-icon">?</span></el-tooltip></label>
+                                <div v-for="(dns, dIndex) in slave.option.dnsServer" :key="dIndex" class="array-item">
+                                    <input v-model="slave.option.dnsServer[dIndex]" class="form-input array-input"
+                                        type="text" placeholder="119.29.29.29:53">
+                                    <div class="array-actions">
+                                        <button class="array-btn remove-btn"
+                                            @click="removeDnsServer(index, dIndex)">-</button>
+                                    </div>
+                                </div>
+                                <button class="array-btn add-btn" @click="addDnsServer(index)">+ 添加DNS</button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <button class="array-btn add-btn" @click="addSlave">+ 添加后端</button>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="btn-group">
+                <button class="btn btn-primary" :loading="saving" @click="saveConfig">保存配置</button>
+                <button class="btn btn-secondary" @click="exportConfig">导出配置</button>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;" v-if="saveMessage">{{ saveMessage }}
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <script>
@@ -652,6 +825,8 @@
                 const loading = ref(true);
                 const saving = ref(false);
                 const saveMessage = ref("");
+                const isMiniApp = ref(isInTelegramMiniApp());
+                const manualChatId = ref(localStorage.getItem('koipy_manual_chatid') || "");
                 const config = ref({
                     license: "",
                     admin: [],
@@ -757,16 +932,51 @@
                         token: "",
                         address: "127.0.0.1:8765",
                         path: "/",
+                        invoker: "",
+                        buildtoken: "MIAOKO4|580JxAo049R|GEnERAl|1X571R930|T0kEN",
+                        proxy: "",
                         skipCertVerify: true,
                         tls: true,
                         comment: "",
-                        hidden: false
+                        hidden: false,
+                        option: {
+                            downloadDuration: 8,
+                            downloadThreading: 4,
+                            downloadURL: "",
+                            pingAddress: "https://cp.cloudflare.com/generate_204",
+                            pingAverageOver: 3,
+                            stunURL: "udp://stunserver2025.stunprotocol.org:3478",
+                            taskRetry: 3,
+                            taskTimeout: 2500,
+                            apiVersion: 1,
+                            uploadURL: "https://speed.cloudflare.com/__up",
+                            uploadDuration: 8,
+                            uploadThreading: 4,
+                            dnsServer: []
+                        }
                     });
                 };
 
                 // 删除后端
                 const removeSlave = (index) => {
                     config.value.slaveConfig.slaves.splice(index, 1);
+                };
+
+                // 添加 DNS 服务器
+                const addDnsServer = (slaveIndex) => {
+                    const slave = config.value.slaveConfig.slaves[slaveIndex];
+                    if (!slave.option) {
+                        slave.option = { dnsServer: [] };
+                    }
+                    if (!slave.option.dnsServer) {
+                        slave.option.dnsServer = [];
+                    }
+                    slave.option.dnsServer.push("");
+                };
+
+                // 删除 DNS 服务器
+                const removeDnsServer = (slaveIndex, dnsIndex) => {
+                    config.value.slaveConfig.slaves[slaveIndex].option.dnsServer.splice(dnsIndex, 1);
                 };
 
                 // 添加邀请组
@@ -808,6 +1018,26 @@
                     config.value.bot.inviteBlacklistDomain.splice(index, 1);
                 };
 
+                // 递归移除空值、空字符串、空数组
+                const removeEmpty = (obj) => {
+                    if (Array.isArray(obj)) {
+                        const arr = obj
+                            .map(v => (v && typeof v === 'object') ? removeEmpty(v) : v)
+                            .filter(v => v !== null && v !== undefined && v !== "" && (Array.isArray(v) ? v.length > 0 : true));
+                        return arr.length > 0 ? arr : null;
+                    } else if (obj !== null && typeof obj === 'object') {
+                        const newObj = {};
+                        Object.entries(obj).forEach(([k, v]) => {
+                            const cleaned = (v && typeof v === 'object') ? removeEmpty(v) : v;
+                            if (cleaned !== null && cleaned !== undefined && cleaned !== "" && (Array.isArray(cleaned) ? cleaned.length > 0 : (typeof cleaned === 'object' ? Object.keys(cleaned).length > 0 : true))) {
+                                newObj[k] = cleaned;
+                            }
+                        });
+                        return Object.keys(newObj).length > 0 ? newObj : null;
+                    }
+                    return obj;
+                };
+
                 // 保存配置
                 const saveConfig = async () => {
                     if (!config.value.bot['bot-token']) {
@@ -819,7 +1049,8 @@
                     saveMessage.value = "正在发送配置到 Bot...";
 
                     try {
-                        const yamlStr = jsyaml.dump(config.value);
+                        const cleanedConfig = removeEmpty(config.value);
+                        const yamlStr = jsyaml.dump(cleanedConfig);
                         const blob = new Blob([yamlStr], { type: 'application/x-yaml' });
 
                         let chatId = null;
@@ -830,13 +1061,20 @@
                             }
                         }
 
-                        // 如果没有获取到 chatId，尝试使用配置中的管理员 ID (取第一个)
+                        // 如果 Mini App 没有获取到，或者在普通浏览器环境下，使用手动输入的 ID
+                        if (!chatId && manualChatId.value) {
+                            chatId = manualChatId.value;
+                            // 保存到本地以便下次使用
+                            localStorage.setItem('koipy_manual_chatid', chatId);
+                        }
+
+                        // 如果还是没获取到 chatId，尝试使用配置中的管理员 ID (取第一个)
                         if (!chatId && config.value.admin && config.value.admin.length > 0) {
                             chatId = config.value.admin[0];
                         }
 
                         if (!chatId) {
-                            throw new Error("无法获取 Chat ID，请在 Telegram 中打开");
+                            throw new Error("无法获取 Chat ID，请在 Telegram 中打开或者手动输入 Chat ID");
                         }
 
                         const formData = new FormData();
@@ -874,7 +1112,8 @@
 
                 // 导出配置
                 const exportConfig = () => {
-                    const yamlStr = jsyaml.dump(config.value);
+                    const cleanedConfig = removeEmpty(config.value);
+                    const yamlStr = jsyaml.dump(cleanedConfig);
                     const dataStr = "data:text/yaml;charset=utf-8," + encodeURIComponent(yamlStr);
                     const downloadAnchorNode = document.createElement('a');
                     downloadAnchorNode.setAttribute("href", dataStr);
@@ -919,6 +1158,8 @@
                     saving,
                     saveMessage,
                     config,
+                    isMiniApp,
+                    manualChatId,
                     addAdmin,
                     removeAdmin,
                     addCommand,
@@ -931,6 +1172,8 @@
                     removeInviteBlacklistURL,
                     addInviteBlacklistDomain,
                     removeInviteBlacklistDomain,
+                    addDnsServer,
+                    removeDnsServer,
                     saveConfig,
                     exportConfig
                 };
