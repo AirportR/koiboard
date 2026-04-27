@@ -234,6 +234,7 @@ const el = {
   jsonEditor: document.querySelector("#json-editor"),
   yamlEditor: document.querySelector("#yaml-editor"),
   healthText: document.querySelector("#health-text"),
+  connectionBar: document.querySelector("#connection-bar"),
   navHealthText: document.querySelector("#nav-health-text"),
   navHealthDot: document.querySelector("#nav-health-dot"),
   draftText: document.querySelector("#draft-text"),
@@ -708,6 +709,7 @@ function renderChrome() {
   el.viewTitle.textContent = view.title;
   el.viewSubtitle.textContent = view.hint;
   el.healthText.textContent = state.health === "online" ? "已连接" : state.health === "error" ? "连接失败" : "连接中";
+  if (el.connectionBar) el.connectionBar.dataset.health = state.health;
   el.navHealthText.textContent = el.healthText.textContent;
   el.navHealthDot.className = `status-dot ${state.health}`;
   el.draftText.textContent = !state.config ? "未加载" : state.dirtyPaths.size ? `${state.dirtyPaths.size} 处未保存` : "已同步";
@@ -761,10 +763,17 @@ function renderSearch() {
     button.type = "button";
     button.dataset.path = node.path;
     button.className = "search-row";
-    button.innerHTML = `<span><strong>${escapeHtml(node.key)}</strong><code>${escapeHtml(node.path)}</code></span><em>${node.type}</em>`;
+    button.innerHTML = `<span><strong>${escapeHtml(node.key)}</strong><code title="${escapeHtml(node.path)}">${escapeHtml(node.path)}</code></span><em>${node.type}</em>`;
     list.append(button);
   });
   el.searchResults.append(list);
+}
+
+function viewIdForPath(path) {
+  if (!path || path === "$") return "dashboard";
+  const root = tokenize(path)[0];
+  const matched = views.find((view) => view.roots.includes(root));
+  return matched ? matched.id : "dashboard";
 }
 
 function render() {
@@ -1762,8 +1771,19 @@ function bindEvents() {
   el.searchResults.addEventListener("click", (event) => {
     const row = event.target.closest("[data-path]");
     if (!row) return;
-    state.selectedPath = row.dataset.path;
-    renderInspector();
+    const path = row.dataset.path;
+    state.selectedPath = path;
+    state.activeView = viewIdForPath(path);
+    render();
+    const escaped = window.CSS?.escape ? window.CSS.escape(path) : path.replace(/["\\]/g, "\\$&");
+    const field = document.querySelector(`[data-field-path="${escaped}"]`);
+    if (field) {
+      field.classList.remove("search-hit");
+      void field.offsetWidth;
+      field.classList.add("search-hit");
+      field.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+    document.querySelector("#main").focus();
   });
 
   document.body.addEventListener("change", async (event) => {

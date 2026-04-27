@@ -30,6 +30,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.2-4.2M10.8 18.2a7.4 7.4 0 1 1 0-14.8 7.4 7.4 0 0 1 0 14.8Z"></path></svg>
           <input id="global-search" type="search" placeholder="搜索路径、字段名、中文说明" autocomplete="off">
         </div>
+        <section class="result-panel search-results-panel is-hidden" id="search-results" aria-label="搜索结果"></section>
       </div>
 
       <nav class="section-nav" id="section-nav" aria-label="配置大类"></nav>
@@ -54,39 +55,49 @@
           <p id="view-subtitle">读取运行态配置后，在本地草稿中完成编辑、校验和应用。</p>
         </div>
 
+        <section class="connection-bar" id="connection-bar" aria-label="连接与认证">
+          <div class="connection-head">
+            <div>
+              <p class="eyebrow">Connection Setup</p>
+              <h3>连接与认证</h3>
+            </div>
+            <p class="connection-state">连接状态：<strong id="health-text">连接中</strong></p>
+          </div>
+          <div class="connection-grid">
+            <div class="connection-field api-field">
+              <label for="api-base">API 地址</label>
+              <input id="api-base" type="text" inputmode="url" placeholder="留空使用同源 API，例如 http://127.0.0.1:8899">
+              <small id="api-base-hint">留空表示使用当前站点同源 API。</small>
+            </div>
+            <div class="connection-field access-field">
+              <label for="access-password">访问密码</label>
+              <span class="secret-input">
+                <input id="access-password" type="password" autocomplete="current-password" placeholder="webapp.password">
+                <button class="icon-button" type="button" id="toggle-access-password" aria-label="显示或隐藏访问密码">
+                  <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </span>
+              <label class="remember-access" for="remember-access-password">
+                <input id="remember-access-password" type="checkbox">
+                <span>记住密码（仅当前浏览器）</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
         <div class="topbar-controls">
-          <div class="action-row">
+          <div class="action-row action-row-main">
             <button class="button secondary" type="button" id="validate-draft">校验草稿</button>
             <button class="button primary" type="button" id="write-memory">写入内存</button>
             <button class="button secondary" type="button" id="save-file">保存</button>
+          </div>
+          <div class="action-row action-row-danger" aria-label="危险操作">
             <button class="button accent" type="button" id="save-reload">保存并重载</button>
           </div>
         </div>
       </header>
 
-      <section class="connection-bar" aria-label="连接与认证">
-        <div class="connection-field api-field">
-          <label for="api-base">API 地址</label>
-          <input id="api-base" type="text" inputmode="url" placeholder="留空使用同源 API，例如 http://127.0.0.1:8899">
-          <small id="api-base-hint">留空表示使用当前站点同源 API。</small>
-        </div>
-        <div class="connection-field access-field">
-          <label for="access-password">访问密码</label>
-          <span class="secret-input">
-            <input id="access-password" type="password" autocomplete="current-password" placeholder="webapp.password">
-            <button class="icon-button" type="button" id="toggle-access-password" aria-label="显示或隐藏访问密码">
-              <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-          </span>
-          <label class="remember-access" for="remember-access-password">
-            <input id="remember-access-password" type="checkbox">
-            <span>记住密码（仅当前浏览器）</span>
-          </label>
-        </div>
-      </section>
-
       <section class="status-strip" aria-label="配置状态">
-        <article><span>连接</span><strong id="health-text">待连接</strong></article>
         <article><span>草稿</span><strong id="draft-text">未加载</strong></article>
         <article><span>字段数量</span><strong id="field-count">0</strong></article>
         <article><span>校验结果</span><strong id="validation-text">未校验</strong></article>
@@ -95,7 +106,6 @@
 
       <div class="workspace">
         <section class="content-column">
-          <section class="result-panel is-hidden" id="search-results" aria-label="搜索结果"></section>
           <section class="view-stack" id="view-stack" aria-live="polite"></section>
 
           <section class="advanced-panel" aria-labelledby="advanced-title">
