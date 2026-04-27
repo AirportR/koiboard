@@ -441,16 +441,38 @@ textarea {
 }
 
 .topbar-controls {
+  display: flex;
+  align-items: flex-start;
+}
+
+.topbar-controls .action-row {
+  justify-content: flex-end;
+}
+
+.connection-bar {
   display: grid;
-  gap: var(--space-control);
-  justify-items: end;
+  grid-template-columns: minmax(320px, 1.25fr) minmax(300px, 1fr);
+  gap: var(--space-md);
+  align-items: start;
+  margin-bottom: var(--space-md);
+  padding: var(--space-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.connection-field {
+  display: grid;
+  gap: 6px;
+  align-content: start;
 }
 
 .api-field,
 .access-field {
   display: grid;
   gap: 6px;
-  width: min(440px, 100%);
+  width: 100%;
 }
 
 .api-field small {
@@ -1604,7 +1626,14 @@ textarea {
 
   .topbar-controls {
     width: 100%;
-    justify-items: stretch;
+  }
+
+  .topbar-controls .action-row {
+    justify-content: flex-start;
+  }
+
+  .connection-bar {
+    grid-template-columns: 1fr;
   }
 
   .workspace {
@@ -1620,6 +1649,10 @@ textarea {
 @media (max-width: 900px) {
   .main,
   .sidebar {
+    padding: var(--space-md);
+  }
+
+  .connection-bar {
     padding: var(--space-md);
   }
 

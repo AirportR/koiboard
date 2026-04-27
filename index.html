@@ -55,24 +55,6 @@
         </div>
 
         <div class="topbar-controls">
-          <div class="api-field">
-            <label for="api-base">API 地址</label>
-            <input id="api-base" type="text" inputmode="url" placeholder="留空使用同源 API，例如 http://127.0.0.1:8899">
-            <small id="api-base-hint">留空表示使用当前站点同源 API。</small>
-          </div>
-          <div class="access-field">
-            <label for="access-password">访问密码</label>
-            <span class="secret-input">
-              <input id="access-password" type="password" autocomplete="current-password" placeholder="webapp.password">
-              <button class="icon-button" type="button" id="toggle-access-password" aria-label="显示或隐藏访问密码">
-                <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              </button>
-            </span>
-            <label class="remember-access" for="remember-access-password">
-              <input id="remember-access-password" type="checkbox">
-              <span>记住密码（仅当前浏览器）</span>
-            </label>
-          </div>
           <div class="action-row">
             <button class="button secondary" type="button" id="validate-draft">校验草稿</button>
             <button class="button primary" type="button" id="write-memory">写入内存</button>
@@ -81,6 +63,27 @@
           </div>
         </div>
       </header>
+
+      <section class="connection-bar" aria-label="连接与认证">
+        <div class="connection-field api-field">
+          <label for="api-base">API 地址</label>
+          <input id="api-base" type="text" inputmode="url" placeholder="留空使用同源 API，例如 http://127.0.0.1:8899">
+          <small id="api-base-hint">留空表示使用当前站点同源 API。</small>
+        </div>
+        <div class="connection-field access-field">
+          <label for="access-password">访问密码</label>
+          <span class="secret-input">
+            <input id="access-password" type="password" autocomplete="current-password" placeholder="webapp.password">
+            <button class="icon-button" type="button" id="toggle-access-password" aria-label="显示或隐藏访问密码">
+              <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </span>
+          <label class="remember-access" for="remember-access-password">
+            <input id="remember-access-password" type="checkbox">
+            <span>记住密码（仅当前浏览器）</span>
+          </label>
+        </div>
+      </section>
 
       <section class="status-strip" aria-label="配置状态">
         <article><span>连接</span><strong id="health-text">待连接</strong></article>
