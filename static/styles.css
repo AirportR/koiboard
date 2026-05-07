@@ -417,15 +417,25 @@ textarea {
   padding: var(--space-field);
 }
 
+.connection-card {
+  gap: var(--space-control);
+}
+
+.connection-card-head {
+  display: grid;
+  gap: var(--space-sm);
+}
+
 .mini-status {
-  display: flex;
+  display: inline-flex;
   gap: 10px;
   align-items: center;
 }
 
-.mini-status div {
-  display: grid;
-  gap: 2px;
+.mini-status strong {
+  line-height: 1;
+  font-size: 0.98rem;
+  font-weight: 800;
 }
 
 .mini-status small {
@@ -434,6 +444,7 @@ textarea {
 
 .status-dot {
   display: inline-block;
+  flex: 0 0 auto;
   width: 12px;
   height: 12px;
   border-radius: 999px;
@@ -449,6 +460,58 @@ textarea {
 .status-dot.error {
   background: var(--danger);
   box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.18);
+}
+
+.connection-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.connection-stat {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.connection-stat span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.connection-stat strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#nav-health-latency {
+  transition: color var(--transition-fast);
+}
+
+#nav-health-latency[data-tone="good"] {
+  color: var(--success);
+}
+
+#nav-health-latency[data-tone="warn"] {
+  color: var(--accent);
+}
+
+#nav-health-latency[data-tone="bad"] {
+  color: var(--danger);
+}
+
+#nav-health-latency[data-tone="pending"],
+#nav-health-latency[data-tone="unknown"] {
+  color: var(--text-soft);
 }
 
 .main {

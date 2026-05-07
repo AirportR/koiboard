@@ -35,13 +35,23 @@
 
       <nav class="section-nav" id="section-nav" aria-label="配置大类"></nav>
 
-      <section class="sidebar-card">
-        <div class="mini-status">
-          <span class="status-dot" id="nav-health-dot"></span>
-          <div>
+      <section class="sidebar-card connection-card">
+        <div class="connection-card-head">
+          <p class="eyebrow">Connection Monitor</p>
+          <div class="mini-status">
+            <span class="status-dot" id="nav-health-dot"></span>
             <strong id="nav-health-text">待连接</strong>
-            <small id="nav-sync-time">尚未同步</small>
           </div>
+        </div>
+        <div class="connection-card-grid">
+          <article class="connection-stat">
+            <span>最后同步</span>
+            <strong id="nav-sync-time">尚未同步</strong>
+          </article>
+          <article class="connection-stat">
+            <span>连接延迟</span>
+            <strong id="nav-health-latency">-- ms</strong>
+          </article>
         </div>
         <button class="button secondary full" type="button" id="reload-config">重新拉取配置</button>
       </section>

@@ -19,6 +19,8 @@ const state = {
   editorTab: "json",
   arrayViews: {},
   apiBase: "",
+  healthLatencyMs: null,
+  healthLatencyPrimed: false,
 };
 
 const views = [
@@ -236,6 +238,7 @@ const el = {
   healthText: document.querySelector("#health-text"),
   connectionBar: document.querySelector("#connection-bar"),
   navHealthText: document.querySelector("#nav-health-text"),
+  navHealthLatency: document.querySelector("#nav-health-latency"),
   navHealthDot: document.querySelector("#nav-health-dot"),
   draftText: document.querySelector("#draft-text"),
   fieldCount: document.querySelector("#field-count"),
@@ -711,13 +714,25 @@ function renderChrome() {
   el.healthText.textContent = state.health === "online" ? "已连接" : state.health === "error" ? "连接失败" : "连接中";
   if (el.connectionBar) el.connectionBar.dataset.health = state.health;
   el.navHealthText.textContent = el.healthText.textContent;
+  if (el.navHealthLatency) {
+    if (state.health === "pending") {
+      el.navHealthLatency.textContent = "测试中";
+      el.navHealthLatency.dataset.tone = "pending";
+    } else if (state.health === "online" && Number.isFinite(state.healthLatencyMs)) {
+      el.navHealthLatency.textContent = `${state.healthLatencyMs} ms`;
+      el.navHealthLatency.dataset.tone = state.healthLatencyMs < 120 ? "good" : state.healthLatencyMs < 300 ? "warn" : "bad";
+    } else {
+      el.navHealthLatency.textContent = "-- ms";
+      el.navHealthLatency.dataset.tone = "unknown";
+    }
+  }
   el.navHealthDot.className = `status-dot ${state.health}`;
   el.draftText.textContent = !state.config ? "未加载" : state.dirtyPaths.size ? `${state.dirtyPaths.size} 处未保存` : "已同步";
   el.fieldCount.textContent = String(Math.max(state.paths.length - 1, 0));
   el.validationText.textContent = state.validation === "pass" ? "通过" : state.validation === "fail" ? "失败" : state.validation === "stale" ? "草稿已变更" : "未校验";
   const time = state.lastSyncAt ? state.lastSyncAt.toLocaleTimeString("zh-CN", { hour12: false }) : "--";
   el.syncTime.textContent = time;
-  el.navSyncTime.textContent = state.lastSyncAt ? `最后同步 ${time}` : "尚未同步";
+  el.navSyncTime.textContent = state.lastSyncAt ? time : "尚未同步";
 }
 
 function renderNav() {
@@ -1372,11 +1387,26 @@ function readInputValue(input) {
   return input.value;
 }
 
-async function loadConfig() {
+async function loadConfig(options = {}) {
+  const discardColdSample = options && options.discardColdSample === true;
   try {
     state.health = "pending";
+    state.healthLatencyMs = null;
     renderChrome();
-    await api("/api/health");
+    const measureHealthLatency = async () => {
+      const healthStart = performance.now();
+      await api("/api/health");
+      return Math.max(0, Math.round(performance.now() - healthStart));
+    };
+    let latencyMs = await measureHealthLatency();
+    // For cold start, warm up once and use the second sample.
+    if (discardColdSample && !state.healthLatencyPrimed) {
+      state.healthLatencyPrimed = true;
+      latencyMs = await measureHealthLatency();
+    } else {
+      state.healthLatencyPrimed = true;
+    }
+    state.healthLatencyMs = latencyMs;
     const data = await api("/api/config");
     state.config = data.config;
     state.original = clone(data.config);
@@ -1389,6 +1419,7 @@ async function loadConfig() {
     toast("配置已加载", "已从 Koipy 运行态读取完整配置。");
   } catch (error) {
     state.health = "error";
+    state.healthLatencyMs = null;
     renderChrome();
     toast("连接失败", error.message, "error");
   }
@@ -1954,7 +1985,7 @@ function bindEvents() {
     updateArray(input.dataset.arrayItem, (arr) => { arr[Number(input.dataset.index)] = input.value; });
   });
 
-  el.reload.addEventListener("click", loadConfig);
+  el.reload.addEventListener("click", () => loadConfig());
   el.validate.addEventListener("click", validateDraft);
   el.memory.addEventListener("click", async () => {
     try {
@@ -2024,4 +2055,4 @@ function bindEvents() {
 bindEvents();
 renderChrome();
 renderNav();
-loadConfig();
+loadConfig({ discardColdSample: true });
