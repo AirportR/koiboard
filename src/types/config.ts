@@ -27,7 +27,7 @@ export interface SectionMeta {
 export type SectionId =
   | "dashboard"
   | "basic"
-  | "webapp"
+  | "webapi"
   | "bot"
   | "network"
   | "runtime"

@@ -155,10 +155,10 @@ export function summarize(value: unknown, path = "", showSecrets = false): strin
 export function riskFor(path: string, value: unknown, root: unknown): string {
   const risks: string[] = [];
   if (isSensitive(path)) risks.push("敏感字段，默认脱敏显示；保存前确认使用安全通道。");
-  if (path === "$.webapp.address" && typeof value === "string" && /(^0\.0\.0\.0|:\d+$)/.test(value) && !value.startsWith("127.")) {
+  if (path === "$.webapi.address" && typeof value === "string" && /(^0\.0\.0\.0|:\d+$)/.test(value) && !value.startsWith("127.")) {
     risks.push("可能开放公网访问，请确认访问密码、反向代理和防火墙策略。");
   }
-  if (path === "$.webapp.tls" && value === true && (!getAt(root, "$.webapp.tlsCertFile") || !getAt(root, "$.webapp.tlsKeyFile"))) {
+  if (path === "$.webapi.tls" && value === true && (!getAt(root, "$.webapi.tlsCertFile") || !getAt(root, "$.webapi.tlsKeyFile"))) {
     risks.push("TLS 已开启但证书或私钥路径为空。");
   }
   if (path.includes(".token")) risks.push("修改 token 会影响 Bot 或后端握手。");
@@ -168,14 +168,14 @@ export function riskFor(path: string, value: unknown, root: unknown): string {
 
 export function dangerousChangeMessage(path: string, value: unknown, root: unknown): string {
   if (path === "$.bot.bot-token") return "修改 bot-token 会影响 Telegram Bot 登录状态。";
-  if (path === "$.webapp.password") return "修改 Web 访问密码后，当前页面后续请求也需要使用新密码。";
+  if (path === "$.webapi.password") return "修改 Web API 访问密码后，当前页面后续请求也需要使用新密码。";
   if (/^\$\.slaveConfig\.slaves\[\d+\]\.token$/.test(path)) return "修改 slave token 会影响测速后端握手。";
   if (path === "$.license") return "license 属于敏感授权字段，请确认来源可靠。";
-  if (path === "$.webapp.address" && typeof value === "string" && /(^0\.0\.0\.0|^\[::\]|^\*:|:8899$)/.test(value) && !value.startsWith("127.") && !value.startsWith("localhost")) {
+  if (path === "$.webapi.address" && typeof value === "string" && /(^0\.0\.0\.0|^\[::\]|^\*:|:8899$)/.test(value) && !value.startsWith("127.") && !value.startsWith("localhost")) {
     return "监听地址可能暴露到公网，请确认已设置访问密码和网络访问控制。";
   }
-  if (path === "$.webapp.tls" && value === true && (!getAt(root, "$.webapp.tlsCertFile") || !getAt(root, "$.webapp.tlsKeyFile"))) {
-    return "TLS 已开启但证书或私钥路径为空，保存重载可能导致 Web 面板启动失败。";
+  if (path === "$.webapi.tls" && value === true && (!getAt(root, "$.webapi.tlsCertFile") || !getAt(root, "$.webapi.tlsKeyFile"))) {
+    return "TLS 已开启但证书或私钥路径为空，保存重载可能导致 Web API 启动失败。";
   }
   return "";
 }

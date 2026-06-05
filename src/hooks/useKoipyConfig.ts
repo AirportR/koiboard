@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { api, downloadText, exportConfigYaml, normalizeApiBase } from "../lib/api";
 import { buildPaths, clone, deleteAt, getAt, setAt } from "../lib/configPath";
+import { isReadOnlyPath, preserveReadOnlyConfig } from "../lib/readOnly";
 import { storageKeys } from "../data/metadata";
 import type { ConfigObject, EditorTab, HealthState, PathNode, SectionId, ValidationState } from "../types/config";
 
@@ -96,6 +97,10 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
 
   const updatePath = useCallback(
     (path: string, value: unknown) => {
+      if (isReadOnlyPath(path)) {
+        notify("只读配置", "webapi 只能在前端查看，不能通过前端修改。", "warning");
+        return;
+      }
       setConfig((current) => {
         if (!current) return current;
         const next = clone(current);
@@ -106,11 +111,15 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
       setSelectedPath(path);
       markDirty(path);
     },
-    [markDirty],
+    [config, markDirty, notify, original],
   );
 
   const updateArray = useCallback(
     (path: string, mutate: (items: unknown[]) => void) => {
+      if (isReadOnlyPath(path)) {
+        notify("只读配置", "webapi 只能在前端查看，不能通过前端修改。", "warning");
+        return;
+      }
       setConfig((current) => {
         if (!current) return current;
         const next = clone(current);
@@ -122,11 +131,15 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
       setSelectedPath(path);
       markDirty(path);
     },
-    [markDirty],
+    [markDirty, notify],
   );
 
   const deletePath = useCallback(
     (path: string) => {
+      if (isReadOnlyPath(path)) {
+        notify("只读配置", "webapi 只能在前端查看，不能通过前端删除。", "warning");
+        return;
+      }
       setConfig((current) => {
         if (!current || path === "$") return current;
         const next = clone(current);
@@ -136,7 +149,7 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
       setSelectedPath("$");
       markDirty(path);
     },
-    [markDirty],
+    [markDirty, notify],
   );
 
   const restorePath = useCallback(
@@ -190,7 +203,8 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
   const validateDraft = useCallback(async () => {
     if (!config) return false;
     try {
-      await api(settings, "/api/config/validate", { method: "POST", body: { config } });
+      const writableConfig = preserveReadOnlyConfig(config, original);
+      await api(settings, "/api/config/validate", { method: "POST", body: { config: writableConfig } });
       setValidation("pass");
       notify("校验通过", "当前草稿可被 Koipy 配置模型接受。");
       return true;
@@ -199,12 +213,13 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
       notify("校验失败", error instanceof Error ? error.message : String(error), "error");
       return false;
     }
-  }, [config, notify, settings]);
+  }, [config, notify, original, settings]);
 
   const putDraft = useCallback(
     async (quiet = false) => {
       if (!config) return false;
-      const data = await api<ConfigResponse>(settings, "/api/config", { method: "PUT", body: { config } });
+      const writableConfig = preserveReadOnlyConfig(config, original);
+      const data = await api<ConfigResponse>(settings, "/api/config", { method: "PUT", body: { config: writableConfig } });
       setConfig(data.config);
       setOriginal(clone(data.config));
       setDirtyPaths(new Set());
@@ -213,7 +228,7 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
       if (!quiet) notify("已写入内存", "配置已更新到运行态，尚未必然保存到 config.yaml。");
       return true;
     },
-    [config, notify, settings],
+    [config, notify, original, settings],
   );
 
   const applyMode = useCallback(
@@ -277,7 +292,8 @@ export function useKoipyConfig({ notify }: UseKoipyConfigOptions) {
     (text: string) => {
       const parsed = JSON.parse(text) as ConfigObject;
       if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error("根配置必须是对象");
-      setConfig(parsed);
+      const protectedParsed = preserveReadOnlyConfig(parsed, config || original);
+      setConfig(protectedParsed);
       setSelectedPath("$");
       markDirty("$");
       notify("JSON 已应用", "完整草稿已被替换，保存前请校验。", "warning");

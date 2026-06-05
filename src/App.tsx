@@ -64,7 +64,7 @@ type Model = ReturnType<typeof useKoipyConfig>;
 const sectionIcons: Record<SectionId, ComponentType<{ size?: number }>> = {
   dashboard: Activity,
   basic: Shield,
-  webapp: Globe2,
+  webapi: Globe2,
   bot: Bot,
   network: Network,
   runtime: Gauge,
@@ -303,7 +303,7 @@ function Topbar({ model, selectedSection }: { model: Model; selectedSection: { t
           <div className="connection-field access-field">
             <span>访问密码</span>
             <span className="secret-input">
-              <input type={passwordVisible ? "text" : "password"} value={model.password} onChange={(event) => model.setPassword(event.target.value)} placeholder="webapp.password" autoComplete="current-password" />
+              <input type={passwordVisible ? "text" : "password"} value={model.password} onChange={(event) => model.setPassword(event.target.value)} placeholder="webapi.password" autoComplete="current-password" />
               <button className="icon-button" type="button" onClick={() => setPasswordVisible((value) => !value)} aria-label={passwordVisible ? "隐藏访问密码" : "显示访问密码"}>
                 {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
@@ -385,7 +385,7 @@ function SectionContent({ model, shared }: { model: Model; shared: SharedArraySt
   const renderers: Record<SectionId, ReactElement> = {
     dashboard: <Dashboard model={model} />,
     basic: <BasicView model={model} shared={shared} />,
-    webapp: <WebappView model={model} shared={shared} />,
+    webapi: <WebapiView model={model} />,
     bot: <BotView model={model} shared={shared} />,
     network: <NetworkView model={model} />,
     runtime: <RuntimeView model={model} shared={shared} />,
@@ -420,10 +420,10 @@ function Dashboard({ model }: { model: Model }) {
   const rules = getAt<unknown[]>(model.config, "$.rules", []);
   const slaves = getAt<unknown[]>(model.config, "$.slaveConfig.slaves", []);
   const scripts = getAt<unknown[]>(model.config, "$.scriptConfig.scripts", []);
-  const webapp = getAt<ConfigObject>(model.config, "$.webapp", {});
+  const webapi = getAt<ConfigObject>(model.config, "$.webapi", {});
   const risks = [
-    webapp.enable && !webapp.password ? "Web 面板已开启但未设置访问密码" : "",
-    webapp.tls && (!webapp.tlsCertFile || !webapp.tlsKeyFile) ? "TLS 已开启但证书路径不完整" : "",
+    webapi.enable && !webapi.password ? "Web API 已开启但未设置访问密码" : "",
+    webapi.tls && (!webapi.tlsCertFile || !webapi.tlsKeyFile) ? "TLS 已开启但证书路径不完整" : "",
     !rules.length ? "rules 为空，测试入口不可用" : "",
     !slaves.length ? "未配置测速后端" : "",
   ].filter(Boolean);
@@ -455,7 +455,7 @@ function Dashboard({ model }: { model: Model }) {
         <div className="risk-list">
           {risks.length ? (
             risks.map((risk) => (
-              <button key={risk} type="button" className="risk-item" onClick={() => model.setSelectedPath("$.webapp")}>
+              <button key={risk} type="button" className="risk-item" onClick={() => model.setSelectedPath("$.webapi")}>
                 <AlertTriangle size={17} />
                 {risk}
               </button>
@@ -508,17 +508,21 @@ function BasicView({ model, shared }: { model: Model; shared: SharedArrayState }
   );
 }
 
-function WebappView({ model, shared }: { model: Model; shared: SharedArrayState }) {
+function WebapiView({ model }: { model: Model }) {
   return (
-    <Panel title="Web 面板设置" eyebrow="Web Console" icon={<Globe2 size={18} />}>
+    <Panel title="Web API 只读配置" eyebrow="Read-only Web API" icon={<Globe2 size={18} />}>
+      <div className="readonly-note">
+        <LockKeyhole size={18} />
+        <span>此配置会影响当前 Web API 的监听、认证和跨域策略。为避免通过前端改掉自身入口，这里只展示，不允许编辑或保存。</span>
+      </div>
       <div className="form-grid">
-        <FieldInput model={model} path="$.webapp.enable" label="启用 Web 面板" kind="switch" />
-        <FieldInput model={model} path="$.webapp.address" label="监听地址" placeholder="127.0.0.1:8899" />
-        <FieldInput model={model} path="$.webapp.password" label="访问密码" kind="secret" />
-        <FieldInput model={model} path="$.webapp.tls" label="启用 TLS" kind="switch" />
-        <FieldInput model={model} path="$.webapp.tlsCertFile" label="TLS 证书文件" />
-        <FieldInput model={model} path="$.webapp.tlsKeyFile" label="TLS 私钥文件" kind="secret" />
-        <ArrayEditor model={model} shared={shared} path="$.webapp.allowOrigins" title="允许跨域来源" itemName="origin" />
+        <ReadOnlyField model={model} path="$.webapi.enable" label="启用 Web API" />
+        <ReadOnlyField model={model} path="$.webapi.address" label="监听地址" />
+        <ReadOnlyField model={model} path="$.webapi.password" label="访问密码" secret />
+        <ReadOnlyField model={model} path="$.webapi.tls" label="启用 TLS" />
+        <ReadOnlyField model={model} path="$.webapi.tlsCertFile" label="TLS 证书文件" />
+        <ReadOnlyField model={model} path="$.webapi.tlsKeyFile" label="TLS 私钥文件" secret />
+        <ReadOnlyArray model={model} path="$.webapi.allowOrigins" title="允许跨域来源" />
       </div>
     </Panel>
   );
@@ -826,6 +830,49 @@ function FieldInput({ model, path, label, kind, choices, placeholder, helper, mi
       {control}
       <small id={`${id}-help`}>{help}</small>
     </label>
+  );
+}
+
+function ReadOnlyField({ model, path, label, secret = false }: { model: Model; path: string; label: string; secret?: boolean }) {
+  const value = getAt(model.config, path, "");
+  const help = helpFor(path);
+  const renderedValue = secret ? summarize(value, path, model.showSecrets) : value === "" || value === null || value === undefined ? "未设置" : String(value);
+  return (
+    <button className="readonly-field" type="button" onClick={() => model.setSelectedPath(path)}>
+      <span className="field-title">
+        <strong>{label}</strong>
+        <span className="readonly-badge">只读</span>
+      </span>
+      <output>{renderedValue}</output>
+      <small>{help}</small>
+    </button>
+  );
+}
+
+function ReadOnlyArray({ model, path, title }: { model: Model; path: string; title: string }) {
+  const items = getAt<unknown[]>(model.config, path, []);
+  const safeItems = Array.isArray(items) ? items : [];
+  return (
+    <div className="readonly-array">
+      <div className="array-heading">
+        <span className="field-title">
+          <strong>{title}</strong>
+          <span className="readonly-badge">只读</span>
+        </span>
+      </div>
+      <div className="readonly-list">
+        {safeItems.length ? (
+          safeItems.map((item, index) => (
+            <button key={`${path}-${index}`} type="button" onClick={() => model.setSelectedPath(`${path}[${index}]`)}>
+              <code>{String(item)}</code>
+            </button>
+          ))
+        ) : (
+          <p className="muted">暂无 {title}</p>
+        )}
+      </div>
+      <small>{helpFor(path)}</small>
+    </div>
   );
 }
 
@@ -1260,6 +1307,7 @@ function AdvancedEditor({ model }: { model: Model }) {
           放弃并从文件重载
         </button>
       </div>
+      <p className="readonly-editor-note">`webapi` 为只读根配置。即使在 JSON 草稿中改动，校验和写入前也会恢复为后端当前值。</p>
       {model.editorTab === "json" ? (
         <textarea className="code-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-label="完整 JSON 草稿" />
       ) : (

@@ -779,7 +779,8 @@ textarea:focus {
 .field.is-wide,
 .array-editor,
 .resource-editor,
-.tag-editor {
+.tag-editor,
+.readonly-array {
   grid-column: 1 / -1;
 }
 
@@ -1107,6 +1108,15 @@ textarea:focus {
   gap: var(--space-2);
 }
 
+.readonly-editor-note {
+  border-left: 3px solid var(--warning);
+  color: #fff0b5;
+  background: rgba(247, 201, 72, 0.07);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+}
+
 .code-editor {
   width: 100%;
   min-height: 360px;
@@ -1183,6 +1193,82 @@ textarea:focus {
 .empty-inline,
 .muted {
   color: var(--muted);
+}
+
+.readonly-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  border: 1px solid rgba(247, 201, 72, 0.3);
+  border-radius: var(--radius);
+  background: rgba(247, 201, 72, 0.08);
+  color: #fff0b5;
+  padding: var(--space-3);
+}
+
+.readonly-note svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.readonly-field {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 112px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  padding: var(--space-4);
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.readonly-field:hover {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateY(-1px);
+}
+
+.readonly-field output {
+  min-height: 30px;
+  color: #d9fff7;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.readonly-field small,
+.readonly-array small {
+  color: var(--faint);
+  font-size: 0.78rem;
+}
+
+.readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 999px;
+  background: rgba(125, 211, 252, 0.08);
+  color: var(--blue);
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.readonly-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.readonly-list button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
 }
 
 .toast-region {
