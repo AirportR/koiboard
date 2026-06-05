@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactElement, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactElement, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import {
@@ -25,6 +26,7 @@ import {
   LockKeyhole,
   Network,
   Palette,
+  Pipette,
   Play,
   RefreshCcw,
   RotateCcw,
@@ -60,6 +62,31 @@ import type { ConfigObject, FieldSpec, PathNode, SectionId, ToastMessage } from 
 gsap.registerPlugin(useGSAP);
 
 type Model = ReturnType<typeof useKoipyConfig>;
+type Rgb = { r: number; g: number; b: number };
+type ColorChannel = keyof Rgb;
+type ColorPopoverPosition = { mode: "anchored"; left: number; top: number; width: number } | { mode: "sheet" };
+type EyeDropperConstructor = new () => { open: () => Promise<{ sRGBHex: string }> };
+
+const colorPresets = [
+  "#ffffff",
+  "#edf3f0",
+  "#9ba8a5",
+  "#6d7a77",
+  "#2dd4bf",
+  "#14b8a6",
+  "#7dd3fc",
+  "#60a5fa",
+  "#4ade80",
+  "#f7c948",
+  "#ff7a45",
+  "#ff5f6d",
+  "#171b1c",
+  "#252b2d",
+  "#0d0f10",
+  "#000000",
+];
+
+const colorChannels: ColorChannel[] = ["r", "g", "b"];
 
 const sectionIcons: Record<SectionId, ComponentType<{ size?: number }>> = {
   dashboard: Activity,
@@ -772,13 +799,7 @@ function FieldInput({ model, path, label, kind, choices, placeholder, helper, mi
       </select>
     );
   } else if (inferredKind === "color") {
-    const color = hexPattern.test(display) ? display : "#ffffff";
-    control = (
-      <div className="color-input">
-        <input {...inputProps} type="color" value={color} onChange={(event) => commit(event.target.value)} />
-        <input key={`${path}-${display}`} defaultValue={display} onBlur={(event) => commit(event.target.value)} placeholder="#7dd3fc" />
-      </div>
-    );
+    control = <ColorField id={id} path={path} value={display} describedBy={`${id}-help`} onFocus={inputProps.onFocus} onCommit={commit} />;
   } else if (inferredKind === "secret") {
     control = (
       <input
@@ -820,17 +841,255 @@ function FieldInput({ model, path, label, kind, choices, placeholder, helper, mi
   }
 
   return (
-    <label className={`field ${changed ? "is-dirty" : ""} ${wide ? "is-wide" : ""}`} data-field-path={path}>
+    <div className={`field ${changed ? "is-dirty" : ""} ${wide ? "is-wide" : ""}`} data-field-path={path}>
       <span className="field-title">
-        <strong>{label}</strong>
+        <label htmlFor={id}>{label}</label>
         <button type="button" className="help-tip" aria-label={`字段说明：${help}`} title={help} onClick={() => model.setSelectedPath(path)}>
           ?
         </button>
       </span>
       {control}
       <small id={`${id}-help`}>{help}</small>
-    </label>
+    </div>
   );
+}
+
+function ColorField({ id, path, value, describedBy, onFocus, onCommit }: { id: string; path: string; value: string; describedBy: string; onFocus: () => void; onCommit: (nextValue: string) => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const committedColor = normalizeHexColor(value) ?? "#ffffff";
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(committedColor);
+  const [text, setText] = useState(value);
+  const [popoverPosition, setPopoverPosition] = useState<ColorPopoverPosition>({ mode: "anchored", left: 0, top: 0, width: 360 });
+  const [canUseEyeDropper, setCanUseEyeDropper] = useState(false);
+  const pickerId = `${id}-picker`;
+  const draftColor = normalizeHexColor(draft) ?? committedColor;
+  const rgb = useMemo(() => hexToRgb(draftColor), [draftColor]);
+
+  useEffect(() => {
+    setDraft(committedColor);
+    setText(value);
+  }, [committedColor, value]);
+
+  useEffect(() => {
+    setCanUseEyeDropper(Boolean(getEyeDropper() && window.isSecureContext));
+  }, []);
+
+  const updatePopoverPosition = () => {
+    const anchor = rootRef.current;
+    if (!anchor) return;
+    if (window.innerWidth <= 560) {
+      setPopoverPosition({ mode: "sheet" });
+      return;
+    }
+
+    const margin = 16;
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(360, window.innerWidth - margin * 2);
+    const height = popoverRef.current?.offsetHeight ?? 320;
+    const left = clamp(rect.left, margin, window.innerWidth - width - margin);
+    const belowTop = rect.bottom + 8;
+    const aboveTop = rect.top - height - 8;
+    const fitsBelow = belowTop + height <= window.innerHeight - margin;
+    const top = fitsBelow || aboveTop < margin ? Math.min(belowTop, window.innerHeight - height - margin) : aboveTop;
+
+    setPopoverPosition({ mode: "anchored", left, top: Math.max(margin, top), width });
+  };
+
+  useLayoutEffect(() => {
+    if (open) updatePopoverPosition();
+  }, [draftColor, open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || popoverRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    window.addEventListener("resize", updatePopoverPosition);
+    window.addEventListener("scroll", updatePopoverPosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePopoverPosition);
+      window.removeEventListener("scroll", updatePopoverPosition, true);
+    };
+  }, [open]);
+
+  const updateDraft = (nextValue: string) => {
+    const normalized = normalizeHexColor(nextValue);
+    const next = normalized ?? nextValue;
+    setDraft(next);
+    setText(next);
+  };
+
+  const commitText = (nextValue: string) => {
+    const normalized = normalizeHexColor(nextValue);
+    const next = normalized ?? nextValue.trim();
+    setText(next);
+    if (normalized) setDraft(normalized);
+    if (next !== value) onCommit(next);
+  };
+
+  const applyDraft = () => {
+    setOpen(false);
+    commitText(draftColor);
+  };
+
+  const resetDraft = () => {
+    setDraft(committedColor);
+    setText(value);
+    setOpen(false);
+  };
+
+  const updateChannel = (channel: ColorChannel, nextValue: string) => {
+    const nextRgb = { ...rgb, [channel]: clampByte(Number(nextValue)) };
+    updateDraft(rgbToHex(nextRgb, alphaSuffix(draftColor)));
+  };
+
+  const pickFromScreen = async () => {
+    const EyeDropper = getEyeDropper();
+    if (!EyeDropper) return;
+    try {
+      const result = await new EyeDropper().open();
+      setOpen(false);
+      commitText(result.sRGBHex);
+    } catch {
+      // User canceled the picker.
+    }
+  };
+
+  const popoverStyle = popoverPosition.mode === "anchored" ? { left: popoverPosition.left, top: popoverPosition.top, width: popoverPosition.width } : undefined;
+  const popover =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <div className={`color-popover ${popoverPosition.mode === "sheet" ? "is-sheet" : ""}`} id={pickerId} ref={popoverRef} role="dialog" aria-label={`${path} 颜色选择`} style={popoverStyle}>
+            <div className="color-popover-head">
+              <span className="color-preview" style={{ background: draftColor }} />
+              <code>{draftColor}</code>
+              {canUseEyeDropper && (
+                <button className="icon-button color-eyedropper" type="button" onClick={() => void pickFromScreen()} aria-label="从屏幕吸取颜色" title="从屏幕吸取颜色">
+                  <Pipette size={16} />
+                </button>
+              )}
+            </div>
+            <div className="color-presets" aria-label="预设颜色">
+              {colorPresets.map((preset) => (
+                <button
+                  key={preset}
+                  className={preset === draftColor ? "is-selected" : ""}
+                  type="button"
+                  style={{ background: preset }}
+                  onClick={() => updateDraft(preset)}
+                  aria-label={`选择颜色 ${preset}`}
+                />
+              ))}
+            </div>
+            <div className="color-channels">
+              {colorChannels.map((channel) => (
+                <label className="color-channel" key={channel}>
+                  <span>{channel.toUpperCase()}</span>
+                  <input type="range" min={0} max={255} value={rgb[channel]} onChange={(event) => updateChannel(channel, event.target.value)} aria-label={`${channel.toUpperCase()} 通道`} />
+                  <output>{rgb[channel]}</output>
+                </label>
+              ))}
+            </div>
+            <div className="color-popover-actions">
+              <button className="button secondary" type="button" onClick={resetDraft}>
+                <X size={16} />
+                取消
+              </button>
+              <button className="button primary" type="button" onClick={applyDraft}>
+                <CheckCircle2 size={16} />
+                应用
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <div className={`color-input ${open ? "is-open" : ""}`} ref={rootRef}>
+      <button
+        className="color-swatch-button"
+        type="button"
+        onClick={() => {
+          onFocus();
+          setOpen((current) => !current);
+        }}
+        aria-label={`打开 ${path} 颜色选择`}
+        aria-expanded={open}
+        aria-controls={pickerId}
+      >
+        <span style={{ background: draftColor }} />
+      </button>
+      <input
+        id={id}
+        aria-describedby={describedBy}
+        value={text}
+        onFocus={onFocus}
+        onChange={(event) => setText(event.target.value)}
+        onBlur={(event) => commitText(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
+        placeholder="#7dd3fc"
+        autoComplete="off"
+        spellCheck={false}
+      />
+      {popover}
+    </div>
+  );
+}
+
+function normalizeHexColor(value: string) {
+  const trimmed = value.trim();
+  if (!hexPattern.test(trimmed)) return null;
+  if (trimmed.length === 4) {
+    const [, r, g, b] = trimmed;
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return trimmed.toLowerCase();
+}
+
+function hexToRgb(value: string): Rgb {
+  const normalized = normalizeHexColor(value) ?? "#ffffff";
+  return {
+    r: Number.parseInt(normalized.slice(1, 3), 16),
+    g: Number.parseInt(normalized.slice(3, 5), 16),
+    b: Number.parseInt(normalized.slice(5, 7), 16),
+  };
+}
+
+function rgbToHex({ r, g, b }: Rgb, alpha = "") {
+  const hex = [r, g, b].map((channel) => clampByte(channel).toString(16).padStart(2, "0")).join("");
+  return `#${hex}${alpha}`.toLowerCase();
+}
+
+function alphaSuffix(value: string) {
+  const normalized = normalizeHexColor(value);
+  return normalized && normalized.length === 9 ? normalized.slice(7) : "";
+}
+
+function clampByte(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function clamp(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
+}
+
+function getEyeDropper() {
+  return (window as Window & { EyeDropper?: EyeDropperConstructor }).EyeDropper;
 }
 
 function ReadOnlyField({ model, path, label, secret = false }: { model: Model; path: string; label: string; secret?: boolean }) {
