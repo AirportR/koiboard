@@ -1,0 +1,16 @@
+services:
+  koiboard:
+    build:
+      context: .
+    image: koiboard:local
+    container_name: koiboard
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /root/koipy_cert:/etc/nginx/tls:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --no-check-certificate -O - https://127.0.0.1/healthz | grep -qx ok"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

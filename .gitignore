@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local deployment config (contains secret access password)
+nginx.conf
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

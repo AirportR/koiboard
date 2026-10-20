@@ -8,8 +8,10 @@ Koiboard V3 是 Koipy 的独立前端控制台，用于读取、编辑、校验�
 - 按配置分类编辑 `license`、`bot`、`runtime`、`rules`、`slaveConfig`、`scriptConfig`、`image`、`translation` 等字段
 - 校验草稿、写入内存、保存到 `config.yaml`、保存并重载
 - 预览和导出 YAML
-- 全局搜索 YAMLPath
+- 全局搜索 YAMLPath（`Ctrl+K` / `⌘K` 聚焦搜索框）
 - 字段说明、风险提示、敏感值脱敏
+- 深色 / 浅色主题切换，选择结果保存在 `localStorage`，首次访问跟随系统配色
+- 顶部常驻连接与认证状态、最后同步时间、本地改动计数
 - `webapi` 配置只读展示，不能通过前端修改或删除
 
 ## 环境要求
@@ -89,6 +91,7 @@ Koiboard V3 是静态前端，发布时只需要部署 `dist/`。
 
 - Nginx / Caddy / Apache 静态站点
 - Vercel / Netlify / Cloudflare Pages
+- Docker / Docker Compose（本仓库已内置）
 - 和 Koipy Web API 放在同一域名下，由反向代理分发
 
 推荐同源反向代理结构：
@@ -100,6 +103,32 @@ https://example.com/api/*     -> Koipy Web API
 
 如果前端和 Koipy API 分离部署，必须在 `webapi.allowOrigins` 中加入前端 origin。不要用不受控的通配来源暴露管理 API。
 
+### Docker 部署
+
+仓库内置了 `Dockerfile`、`docker-compose.yml` 和 `nginx.conf.example`，用于「Nginx + 静态资源 + 反向代理 Koipy Web API」的一体化部署。
+
+首次使用先复制一份本地 Nginx 配置：
+
+```powershell
+Copy-Item nginx.conf.example nginx.conf
+```
+
+然后编辑 `nginx.conf`，至少修改这些地方：
+
+- `server_name`：改成自己的域名
+- `ssl_certificate` / `ssl_certificate_key`：指向自己的证书路径（compose 默认挂载 `/root/koipy_cert` 到 `/etc/nginx/tls`）
+- `$http_x_access_password != "..."`：把占位符替换成真实的 `webapi.password`，Nginx 会在转发到 Koipy 前校验该密码
+
+构建并启动：
+
+```powershell
+docker compose up -d --build
+```
+
+`docker-compose.yml` 使用 `network_mode: host`，Nginx 通过 `127.0.0.1:8899` 访问宿主机上的 Koipy Web API，因此 Koipy 只需监听本机回环地址。健康检查请求 `/healthz`，正常返回 `ok`。
+
+> `nginx.conf` 含明文访问密码，已加入 `.gitignore`，**不要提交到仓库**。需要改代理规则时，请同步更新 `nginx.conf.example`（其中密码位置保持占位符）。
+
 ## 安全注意
 
 - `webapi.password` 应设置强密码
@@ -107,6 +136,8 @@ https://example.com/api/*     -> Koipy Web API
 - 不要把 Koipy Web API 直接暴露到公网且无访问控制
 - `webapi` 在本前端中只读：UI 不提供编辑控件；高级 JSON 即使修改了 `webapi`，校验和写入前也会恢复为后端当前值
 - 敏感字段默认脱敏显示，可在右侧 Inspector 中临时切换显示
+- 部署用的 `nginx.conf` 含明文访问密码，只保留在本机；仓库里只提交 `nginx.conf.example` 占位版本
+- 前端记住的访问密码只存在当前浏览器 `localStorage`，换设备或清缓存后需要重新输入
 
 ## 维护指南
 
@@ -121,8 +152,18 @@ src/lib/configPath.ts       # YAMLPath 解析、读写、摘要、风险提示
 src/lib/defaults.ts         # 新增规则/后端/脚本/命令/颜色断点默认值
 src/lib/readOnly.ts         # 只读根配置保护，目前保护 $.webapi
 src/types/config.ts         # 共享类型定义
+index.html                  # 入口 HTML，含首屏主题初始化脚本
+Dockerfile                  # 多阶段构建：node 构建 dist，nginx 托管
+docker-compose.yml          # 一体化部署编排
+nginx.conf.example          # 反向代理模板（密码为占位符）
 docs/extracted-logic.md     # 从旧项目前端提取出的逻辑说明
 ```
+
+主题与搜索：
+
+- 主题模式存于 `localStorage` 的 `koiboard.theme`（`dark` / `light`）
+- `index.html` 里的内联脚本在首屏渲染前写入 `data-theme`，避免深色/浅色闪烁
+- 导航和视图样式都基于 `[data-theme]` 选择器覆盖，新增样式请同时提供浅色版本
 
 字段说明维护：
 
