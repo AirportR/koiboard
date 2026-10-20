@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactElement, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactElement, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -11,7 +11,9 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardCopy,
+  Clock3,
   Code2,
+  Command,
   Database,
   Download,
   Eye,
@@ -24,6 +26,7 @@ import {
   ListPlus,
   LoaderCircle,
   LockKeyhole,
+  Moon,
   Network,
   Palette,
   Pipette,
@@ -35,9 +38,12 @@ import {
   Server,
   Shield,
   SlidersHorizontal,
+  Sparkles,
+  Sun,
   Trash2,
   Undo2,
   UploadCloud,
+  Wifi,
   X,
 } from "lucide-react";
 import { hexPattern, runtimeFields, scriptReservedNames, sections } from "./data/metadata";
@@ -64,6 +70,7 @@ gsap.registerPlugin(useGSAP);
 type Model = ReturnType<typeof useKoipyConfig>;
 type Rgb = { r: number; g: number; b: number };
 type ColorChannel = keyof Rgb;
+type ThemeMode = "dark" | "light";
 type ColorPopoverPosition = { mode: "anchored"; left: number; top: number; width: number } | { mode: "sheet" };
 type EyeDropperConstructor = new () => { open: () => Promise<{ sRGBHex: string }> };
 
@@ -105,6 +112,7 @@ const sectionIcons: Record<SectionId, ComponentType<{ size?: number }>> = {
 function App() {
   const shellRef = useRef<HTMLDivElement>(null);
   const booted = useRef(false);
+  const [theme, setTheme] = useState<ThemeMode>(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
   const { toasts, notify, dismiss } = useToasts();
   const model = useKoipyConfig({ notify });
   const [search, setSearch] = useState("");
@@ -115,6 +123,22 @@ function App() {
     booted.current = true;
     void model.loadConfig({ discardColdSample: true });
   }, [model]);
+
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      event.preventDefault();
+      document.querySelector<HTMLInputElement>("#global-search")?.focus();
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("koiboard.theme", theme);
+    document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2f4ed" : "#070a09");
+  }, [theme]);
 
   useGSAP(
     () => {
@@ -184,9 +208,11 @@ function App() {
 
   return (
     <div className="app-shell" ref={shellRef}>
+      <div className="ambient ambient-one" aria-hidden="true" />
+      <div className="ambient ambient-two" aria-hidden="true" />
       <Sidebar model={model} search={search} setSearch={setSearch} searchResults={searchResults} />
       <main className="main" id="main" tabIndex={-1}>
-        <Topbar model={model} selectedSection={selectedSection} />
+        <Topbar model={model} selectedSection={selectedSection} theme={theme} onToggleTheme={() => setTheme((value) => (value === "dark" ? "light" : "dark"))} />
         <StatusStrip model={model} />
         <div className="workspace">
           <section className="content-column">
@@ -225,18 +251,30 @@ function Sidebar({
         跳转到配置工作区
       </a>
       <section className="brand-panel" aria-labelledby="app-title">
-        <img className="brand-mark" src="/koipy.ico" width="38" height="38" alt="" />
-        <div>
-          <p className="eyebrow">Koi Control Console</p>
-          <h1 id="app-title">Koiboard V3</h1>
+        <span className="brand-mark-wrap">
+          <img className="brand-mark" src="/koipy.ico" width="38" height="38" alt="" />
+        </span>
+        <div className="brand-copy">
+          <p className="eyebrow">Koipy workspace</p>
+          <h1 id="app-title">Koiboard</h1>
         </div>
+        <span className="brand-version">V3</span>
       </section>
 
+      <div className="sidebar-live">
+        <span>
+          <i className="live-pulse" />
+          Live workspace
+        </span>
+        <HealthPill model={model} />
+      </div>
+
       <div className="search-control">
-        <label htmlFor="global-search">全局搜索</label>
+        <label htmlFor="global-search">Command search</label>
         <div className="input-with-icon">
           <Search size={18} />
-          <input id="global-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索路径、字段名、中文说明" autoComplete="off" />
+          <input id="global-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索路径、字段或说明" autoComplete="off" />
+          <kbd>⌘K</kbd>
         </div>
         {searchResults.length > 0 && (
           <section className="result-panel" aria-label="搜索结果">
@@ -250,17 +288,25 @@ function Sidebar({
         )}
       </div>
 
+      <div className="nav-heading">
+        <span>配置工作区</span>
+        <small>{sections.length} modules</small>
+      </div>
+
       <nav className="section-nav" aria-label="配置大类">
-        {sections.map((section) => {
+        {sections.map((section, index) => {
           const Icon = sectionIcons[section.id];
           const count = section.roots.length ? model.paths.filter((node) => section.roots.includes(String(tokenize(node.path)[0] ?? ""))).length : model.paths.length;
           return (
             <button key={section.id} className={`nav-item ${model.activeView === section.id ? "is-active" : ""}`} type="button" onClick={() => model.setActiveView(section.id)}>
-              <Icon size={18} />
-              <span>
-                <strong>{section.shortTitle}</strong>
-                <small>{count} 项</small>
+              <span className="nav-icon">
+                <Icon size={17} />
               </span>
+              <span className="nav-copy">
+                <strong>{section.shortTitle}</strong>
+                <small>{String(index + 1).padStart(2, "0")}</small>
+              </span>
+              <em>{count}</em>
             </button>
           );
         })}
@@ -268,7 +314,7 @@ function Sidebar({
 
       <section className="sidebar-card connection-card">
         <div className="connection-card-head">
-          <p className="eyebrow">Connection Monitor</p>
+          <p className="eyebrow">Session telemetry</p>
           <HealthPill model={model} />
         </div>
         <div className="connection-card-grid">
@@ -281,7 +327,7 @@ function Sidebar({
             <strong>{model.healthLatencyMs === null ? "-- ms" : `${model.healthLatencyMs} ms`}</strong>
           </article>
         </div>
-        <button className="button secondary full" type="button" onClick={() => void model.loadConfig()}>
+        <button className="button secondary full sidebar-refresh" type="button" onClick={() => void model.loadConfig()}>
           <RefreshCcw size={16} />
           重新拉取配置
         </button>
@@ -290,11 +336,29 @@ function Sidebar({
   );
 }
 
-function Topbar({ model, selectedSection }: { model: Model; selectedSection: { title: string; hint: string } }) {
+function Topbar({
+  model,
+  selectedSection,
+  theme,
+  onToggleTheme,
+}: {
+  model: Model;
+  selectedSection: { title: string; hint: string };
+  theme: ThemeMode;
+  onToggleTheme: () => void;
+}) {
   const [apiDraft, setApiDraft] = useState(model.apiBase);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [connectionExpanded, setConnectionExpanded] = useState(() => model.health !== "online");
+  const previousHealth = useRef(model.health);
 
   useEffect(() => setApiDraft(model.apiBase), [model.apiBase]);
+
+  useEffect(() => {
+    if (model.health === "online" && previousHealth.current !== "online") setConnectionExpanded(false);
+    if (model.health === "error") setConnectionExpanded(true);
+    previousHealth.current = model.health;
+  }, [model.health]);
 
   const applyApiBase = () => {
     try {
@@ -308,58 +372,119 @@ function Topbar({ model, selectedSection }: { model: Model; selectedSection: { t
   return (
     <header className="topbar motion-item">
       <div className="topbar-title">
-        <p className="eyebrow">Network Lab / Telegram Bot Ops</p>
-        <h2>{selectedSection.title}</h2>
+        <p className="command-kicker">
+          <Command size={14} />
+          Koipy / configuration
+        </p>
+        <div className="title-row">
+          <h2>{selectedSection.title}</h2>
+          <span className="title-rule" aria-hidden="true" />
+        </div>
         <p>{selectedSection.hint}</p>
+        <div className="page-meta">
+          <span>
+            <Wifi size={14} />
+            {model.health === "online" ? "Runtime linked" : model.health === "error" ? "Link interrupted" : "Synchronizing"}
+          </span>
+          <span>
+            <Clock3 size={14} />
+            最后同步 {formatTime(model.lastSyncAt)}
+          </span>
+          <span>
+            <Sparkles size={14} />
+            {model.dirtyPaths.size ? `${model.dirtyPaths.size} 项本地修改` : "草稿与运行态一致"}
+          </span>
+        </div>
       </div>
 
-      <section className="connection-bar" data-health={model.health} aria-label="连接与认证">
-        <div className="connection-head">
-          <div>
-            <p className="eyebrow">Connection Setup</p>
-            <h3>连接与认证</h3>
+      <div className="topbar-utility">
+        <HealthPill model={model} />
+        <button className="theme-toggle" type="button" onClick={onToggleTheme} aria-label={theme === "dark" ? "切换到日间模式" : "切换到夜间模式"} title={theme === "dark" ? "切换到日间模式" : "切换到夜间模式"}>
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          <span>{theme === "dark" ? "日间" : "夜间"}</span>
+        </button>
+        <button className="icon-button utility-refresh" type="button" onClick={() => void model.loadConfig()} aria-label="重新拉取配置" title="重新拉取配置">
+          <RefreshCcw size={17} />
+        </button>
+      </div>
+
+      <section className={`connection-bar ${connectionExpanded ? "is-expanded" : "is-collapsed"}`} data-health={model.health} aria-label="连接与认证">
+        <div className="connection-primary">
+          <div className="connection-head">
+            <div className="connection-heading">
+              <span className="connection-glyph">
+                <Shield size={17} />
+              </span>
+              <div>
+                <p className="eyebrow">Secure session</p>
+                <h3>运行态连接</h3>
+              </div>
+            </div>
+            <span className="connection-origin">{model.apiBase || window.location.origin}</span>
           </div>
-          <HealthPill model={model} />
+
+          {connectionExpanded && (
+            <div className="connection-grid">
+              <label className="connection-field api-field">
+                <span>API 地址</span>
+                <input value={apiDraft} onChange={(event) => setApiDraft(event.target.value)} onBlur={applyApiBase} placeholder="留空使用同源 API，例如 http://127.0.0.1:8899" inputMode="url" autoFocus={false} />
+                <small>{model.apiBase ? `当前 API：${model.apiBase}` : `当前 API：同源（${window.location.origin}）`}</small>
+              </label>
+              <div className="connection-field access-field">
+                <span>访问密码</span>
+                <span className="secret-input">
+                  <input type={passwordVisible ? "text" : "password"} value={model.password} onChange={(event) => model.setPassword(event.target.value)} placeholder="webapi.password" autoComplete="current-password" />
+                  <button className="icon-button" type="button" onClick={() => setPasswordVisible((value) => !value)} aria-label={passwordVisible ? "隐藏访问密码" : "显示访问密码"}>
+                    {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </span>
+                <label className="remember-access">
+                  <input type="checkbox" checked={model.rememberPassword} onChange={(event) => model.setRememberPassword(event.target.checked)} />
+                  <span>记住密码（仅当前浏览器）</span>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="connection-grid">
-          <label className="connection-field api-field">
-            <span>API 地址</span>
-            <input value={apiDraft} onChange={(event) => setApiDraft(event.target.value)} onBlur={applyApiBase} placeholder="留空使用同源 API，例如 http://127.0.0.1:8899" inputMode="url" />
-            <small>{model.apiBase ? `当前 API：${model.apiBase}` : `当前 API：同源（${window.location.origin}）`}</small>
-          </label>
-          <div className="connection-field access-field">
-            <span>访问密码</span>
-            <span className="secret-input">
-              <input type={passwordVisible ? "text" : "password"} value={model.password} onChange={(event) => model.setPassword(event.target.value)} placeholder="webapi.password" autoComplete="current-password" />
-              <button className="icon-button" type="button" onClick={() => setPasswordVisible((value) => !value)} aria-label={passwordVisible ? "隐藏访问密码" : "显示访问密码"}>
-                {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
+
+        <div className="connection-summary-actions">
+          {model.health === "online" && !connectionExpanded && (
+            <span className="connection-ready">
+              <CheckCircle2 size={14} />
+              已安全连接
             </span>
-            <label className="remember-access">
-              <input type="checkbox" checked={model.rememberPassword} onChange={(event) => model.setRememberPassword(event.target.checked)} />
-              <span>记住密码（仅当前浏览器）</span>
-            </label>
-          </div>
+          )}
+          <button className="connection-toggle" type="button" onClick={() => setConnectionExpanded((value) => !value)} aria-expanded={connectionExpanded}>
+            {connectionExpanded ? "收起连接设置" : "连接设置"}
+            {connectionExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </button>
         </div>
       </section>
 
-      <div className="topbar-controls">
-        <button className="button secondary" type="button" onClick={() => void model.validateDraft()} disabled={!model.config}>
-          <FileCheck2 size={16} />
-          校验草稿
-        </button>
-        <button className="button primary" type="button" onClick={() => void model.putDraft()} disabled={!model.config}>
-          <UploadCloud size={16} />
-          写入内存
-        </button>
-        <button className="button secondary" type="button" onClick={() => void model.saveWithMode("save")} disabled={!model.config}>
-          <Save size={16} />
-          保存
-        </button>
-        <button className="button accent" type="button" onClick={() => void model.saveWithMode("save_reload")} disabled={!model.config}>
-          <Play size={16} />
-          保存并重载
-        </button>
+      <div className="action-dock">
+        <div className="action-dock-summary">
+          <span>Deployment controls</span>
+          <strong>{model.config ? (model.dirtyPaths.size ? `${model.dirtyPaths.size} 项待提交` : "配置已就绪") : "等待连接"}</strong>
+          <small>校验 → 写入内存 → 保存 / 重载</small>
+        </div>
+        <div className="topbar-controls">
+          <button className="button secondary" type="button" onClick={() => void model.validateDraft()} disabled={!model.config}>
+            <FileCheck2 size={16} />
+            校验草稿
+          </button>
+          <button className="button secondary" type="button" onClick={() => void model.putDraft()} disabled={!model.config}>
+            <UploadCloud size={16} />
+            写入内存
+          </button>
+          <button className="button secondary" type="button" onClick={() => void model.saveWithMode("save")} disabled={!model.config}>
+            <Save size={16} />
+            保存
+          </button>
+          <button className="button accent" type="button" onClick={() => void model.saveWithMode("save_reload")} disabled={!model.config}>
+            <Play size={16} />
+            保存并重载
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -380,21 +505,30 @@ function StatusStrip({ model }: { model: Model }) {
   const validationText = model.validation === "pass" ? "通过" : model.validation === "fail" ? "失败" : "未校验";
   return (
     <section className="status-strip motion-item" aria-label="配置状态">
-      <article>
-        <span>草稿</span>
+      <div className="status-caption">
+        <span className="status-caption-icon">
+          <Activity size={16} />
+        </span>
+        <span>
+          <small>Workspace pulse</small>
+          <strong>配置运行信号</strong>
+        </span>
+      </div>
+      <article data-tone={model.dirtyPaths.size ? "dirty" : "clean"}>
+        <span>草稿状态</span>
         <strong>{model.dirtyPaths.size ? `${model.dirtyPaths.size} 项修改` : model.config ? "无修改" : "未加载"}</strong>
       </article>
       <article>
-        <span>字段数量</span>
-        <strong>{fieldCount}</strong>
+        <span>配置字段</span>
+        <strong>{fieldCount.toLocaleString("zh-CN")}</strong>
       </article>
       <article>
         <span>校验结果</span>
         <strong data-tone={model.validation}>{validationText}</strong>
       </article>
       <article>
-        <span>最后同步</span>
-        <strong>{formatTime(model.lastSyncAt)}</strong>
+        <span>响应延迟</span>
+        <strong>{model.healthLatencyMs === null ? "--" : `${model.healthLatencyMs} ms`}</strong>
       </article>
     </section>
   );
@@ -430,12 +564,17 @@ function EmptyConfig({ model }: { model: Model }) {
     <section className="view-stack">
       <Panel title="等待连接" eyebrow="Bootstrap" icon={<Database size={18} />}>
         <div className="empty-state">
-          <LockKeyhole size={30} />
-          <h3>还没有载入 Koipy 配置</h3>
-          <p>填写 API 地址和访问密码后，重新拉取配置即可开始编辑。</p>
+          <span className="empty-state-icon">
+            <LockKeyhole size={28} />
+          </span>
+          <div>
+            <p className="eyebrow">Secure handshake required</p>
+            <h3>连接运行态，开始编排配置</h3>
+            <p>在顶部填写 API 地址和访问密码，然后读取 Koipy 的完整配置。</p>
+          </div>
           <button className="button primary" type="button" onClick={() => void model.loadConfig()}>
             <RefreshCcw size={16} />
-            读取配置
+            建立连接
           </button>
         </div>
       </Panel>
@@ -449,64 +588,100 @@ function Dashboard({ model }: { model: Model }) {
   const scripts = getAt<unknown[]>(model.config, "$.scriptConfig.scripts", []);
   const webapi = getAt<ConfigObject>(model.config, "$.webapi", {});
   const risks = [
-    webapi.enable && !webapi.password ? "Web API 已开启但未设置访问密码" : "",
-    webapi.tls && (!webapi.tlsCertFile || !webapi.tlsKeyFile) ? "TLS 已开启但证书路径不完整" : "",
-    !rules.length ? "rules 为空，测试入口不可用" : "",
-    !slaves.length ? "未配置测速后端" : "",
-  ].filter(Boolean);
+    webapi.enable && !webapi.password ? { text: "Web API 已开启但未设置访问密码", path: "$.webapi.password" } : null,
+    webapi.tls && (!webapi.tlsCertFile || !webapi.tlsKeyFile) ? { text: "TLS 已开启但证书路径不完整", path: "$.webapi" } : null,
+    !rules.length ? { text: "rules 为空，测试入口不可用", path: "$.rules" } : null,
+    !slaves.length ? { text: "未配置测速后端", path: "$.slaveConfig.slaves" } : null,
+  ].filter((item): item is { text: string; path: string } => Boolean(item));
 
   return (
     <>
       <section className="dashboard-grid view-panel">
         <article className="hero-panel">
-          <p className="eyebrow">Control Surface</p>
-          <h3>草稿优先的 Koipy 配置台</h3>
-          <p>所有修改先停留在浏览器草稿。校验通过后，可写入内存、保存到 config.yaml，或保存并触发重载。</p>
-          <div className="hero-actions">
-            <button className="button primary" type="button" onClick={() => void model.validateDraft()}>
-              <FileCheck2 size={16} />
-              校验草稿
-            </button>
-            <button className="button accent" type="button" onClick={() => void model.saveWithMode("save_reload")}>
-              <Play size={16} />
-              保存并重载
-            </button>
+          <div className="hero-copy">
+            <p className="eyebrow">Operational canvas</p>
+            <h3>
+              配置，不该像
+              <span>一张后台表单。</span>
+            </h3>
+            <p>在清晰的运行上下文中审阅、调整并部署 Koipy。所有修改先在本地成稿，只有经过校验与确认，才会进入运行态。</p>
+            <div className="hero-actions">
+              <button className="button primary" type="button" onClick={() => void model.validateDraft()}>
+                <FileCheck2 size={16} />
+                校验当前草稿
+              </button>
+              <button className="button accent" type="button" onClick={() => void model.saveWithMode("save_reload")}>
+                <Play size={16} />
+                保存并重载
+              </button>
+            </div>
           </div>
+          <div className="hero-visual" aria-hidden="true">
+            <span className="orbit orbit-one" />
+            <span className="orbit orbit-two" />
+            <span className="orbit-core">
+              <Sparkles size={26} />
+            </span>
+            <span className="orbit-label orbit-label-top">DRAFT FIRST</span>
+            <span className="orbit-label orbit-label-bottom">RUNTIME SAFE</span>
+          </div>
+          <footer className="hero-footer">
+            <span>
+              <i />
+              {model.health === "online" ? "运行态已连接" : "等待运行态连接"}
+            </span>
+            <span>{model.paths.length} 个可审阅字段</span>
+          </footer>
         </article>
-        <Metric label="规则" value={rules.length} hint="rules" icon={<Layers3 size={20} />} />
-        <Metric label="后端" value={slaves.length} hint="slaveConfig.slaves" icon={<Server size={20} />} />
-        <Metric label="脚本" value={scripts.length} hint="scriptConfig.scripts" icon={<Code2 size={20} />} />
+        <div className="metric-grid">
+          <Metric label="测试规则" value={rules.length} hint="rules" icon={<Layers3 size={20} />} />
+          <Metric label="测速后端" value={slaves.length} hint="slaves" icon={<Server size={20} />} />
+          <Metric label="扩展脚本" value={scripts.length} hint="scripts" icon={<Code2 size={20} />} />
+        </div>
       </section>
 
-      <Panel title="安全与变更摘要" eyebrow="Ops Guard" icon={<Shield size={18} />}>
-        <div className="risk-list">
-          {risks.length ? (
-            risks.map((risk) => (
-              <button key={risk} type="button" className="risk-item" onClick={() => model.setSelectedPath("$.webapi")}>
-                <AlertTriangle size={17} />
-                {risk}
-              </button>
-            ))
-          ) : (
-            <div className="success-state">
-              <CheckCircle2 size={18} />
-              当前未发现高优先级配置风险。
-            </div>
-          )}
-        </div>
-        <div className="change-list">
-          {model.dirtyPaths.size ? (
-            [...model.dirtyPaths].map((path) => (
-              <button key={path} type="button" className="change-item" onClick={() => model.setSelectedPath(path)}>
-                <code>{path}</code>
-                <span>{summarize(getAt(model.config, path), path, model.showSecrets)}</span>
-              </button>
-            ))
-          ) : (
-            <p className="muted">暂无未保存修改。编辑任意字段后会在这里显示变更路径。</p>
-          )}
-        </div>
-      </Panel>
+      <div className="dashboard-lower view-panel">
+        <Panel title="风险雷达" eyebrow="Signal quality" icon={<Shield size={18} />}>
+          <div className="panel-intro">{risks.length ? "发现需要关注的配置信号，可直接跳转到对应字段。" : "关键配置项运行正常，未发现高优先级风险。"}</div>
+          <div className="risk-list">
+            {risks.length ? (
+              risks.map((risk) => (
+                <button key={risk.text} type="button" className="risk-item" onClick={() => model.setSelectedPath(risk.path)}>
+                  <AlertTriangle size={17} />
+                  <span>{risk.text}</span>
+                  <ChevronDown size={15} className="risk-arrow" />
+                </button>
+              ))
+            ) : (
+              <div className="success-state">
+                <CheckCircle2 size={18} />
+                <span>
+                  <strong>全部信号正常</strong>
+                  <small>当前未发现高优先级配置风险。</small>
+                </span>
+              </div>
+            )}
+          </div>
+        </Panel>
+        <Panel title="草稿日志" eyebrow="Change journal" icon={<ClipboardCopy size={18} />}>
+          <div className="panel-intro">{model.dirtyPaths.size ? "以下字段已进入本地草稿，尚未提交到运行态。" : "当前没有待提交修改。"}</div>
+          <div className="change-list">
+            {model.dirtyPaths.size ? (
+              [...model.dirtyPaths].map((path) => (
+                <button key={path} type="button" className="change-item" onClick={() => model.setSelectedPath(path)}>
+                  <code>{path}</code>
+                  <span>{summarize(getAt(model.config, path), path, model.showSecrets)}</span>
+                </button>
+              ))
+            ) : (
+              <div className="quiet-state">
+                <span>00</span>
+                <p>暂无未保存修改。编辑任意字段后，变更路径会实时出现在这里。</p>
+              </div>
+            )}
+          </div>
+        </Panel>
+      </div>
     </>
   );
 }
@@ -514,10 +689,17 @@ function Dashboard({ model }: { model: Model }) {
 function Metric({ label, value, hint, icon }: { label: string; value: number; hint: string; icon: ReactNode }) {
   return (
     <article className="metric">
-      <span>{icon}</span>
-      <strong>{value}</strong>
-      <small>{label}</small>
-      <em>{hint}</em>
+      <div className="metric-top">
+        <span>{icon}</span>
+        <em>{hint}</em>
+      </div>
+      <div className="metric-value">
+        <strong>{String(value).padStart(2, "0")}</strong>
+        <small>{label}</small>
+      </div>
+      <div className="metric-line" aria-hidden="true">
+        <i style={{ width: `${Math.min(100, 18 + value * 8)}%` }} />
+      </div>
     </article>
   );
 }
@@ -757,6 +939,161 @@ function TranslationView({ model }: { model: Model }) {
   );
 }
 
+function HelpTip({ text, onOpen }: { text: string; onOpen?: () => void }) {
+  const tooltipId = useId();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ mode: "floating" as "floating" | "sheet", left: 0, top: 0, width: 292 });
+
+  const cancelScheduledClose = () => {
+    if (closeTimerRef.current === null) return;
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  };
+
+  const close = () => {
+    cancelScheduledClose();
+    pinnedRef.current = false;
+    setOpen(false);
+  };
+
+  const scheduleClose = () => {
+    cancelScheduledClose();
+    if (pinnedRef.current) return;
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      setOpen(false);
+    }, 140);
+  };
+
+  const updatePosition = () => {
+    const button = buttonRef.current;
+    if (!button) return;
+    if (window.matchMedia("(max-width: 600px)").matches) {
+      setPosition((current) => (current.mode === "sheet" ? current : { ...current, mode: "sheet" }));
+      return;
+    }
+
+    const margin = 12;
+    const rect = button.getBoundingClientRect();
+    const width = Math.min(292, window.innerWidth - margin * 2);
+    const height = popoverRef.current?.offsetHeight ?? 118;
+    const left = clamp(rect.right - width, margin, window.innerWidth - width - margin);
+    const belowTop = rect.bottom + 8;
+    const aboveTop = rect.top - height - 8;
+    const top = belowTop + height <= window.innerHeight - margin || aboveTop < margin ? Math.min(belowTop, window.innerHeight - height - margin) : aboveTop;
+    setPosition({ mode: "floating", left, top: Math.max(margin, top), width });
+  };
+
+  useLayoutEffect(() => {
+    if (open) updatePosition();
+  }, [open, text]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (buttonRef.current?.contains(target) || popoverRef.current?.contains(target)) return;
+      close();
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open]);
+
+  useEffect(() => () => cancelScheduledClose(), []);
+
+  const toggle = () => {
+    if (open) {
+      close();
+      return;
+    }
+    pinnedRef.current = true;
+    setOpen(true);
+    onOpen?.();
+  };
+
+  const popoverStyle = position.mode === "floating" ? { left: position.left, top: position.top, width: position.width } : undefined;
+  const popover =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <>
+            {position.mode === "sheet" && <button className="help-backdrop" type="button" onClick={close} aria-label="关闭字段说明" />}
+            <div
+              className={`help-popover ${position.mode === "sheet" ? "is-sheet" : ""}`}
+              id={tooltipId}
+              ref={popoverRef}
+              role={position.mode === "sheet" ? "dialog" : "tooltip"}
+              aria-label="字段说明"
+              style={popoverStyle}
+              onPointerEnter={(event) => {
+                if (event.pointerType !== "mouse") return;
+                cancelScheduledClose();
+                setOpen(true);
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === "mouse") scheduleClose();
+              }}
+            >
+              <div className="help-popover-head">
+                <span>Field note</span>
+                <button className="help-popover-close" type="button" onClick={close} aria-label="关闭字段说明">
+                  <X size={14} />
+                </button>
+              </div>
+              <p>{text}</p>
+            </div>
+          </>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <span
+      className="help-tip-wrap"
+      onPointerEnter={(event) => {
+        if (event.pointerType !== "mouse") return;
+        cancelScheduledClose();
+        setOpen(true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") scheduleClose();
+      }}
+    >
+      <button
+        ref={buttonRef}
+        type="button"
+        className="help-tip"
+        aria-label={`字段说明：${text}`}
+        aria-expanded={open}
+        aria-controls={tooltipId}
+        onFocus={() => setOpen(true)}
+        onBlur={scheduleClose}
+        onClick={(event) => {
+          event.stopPropagation();
+          toggle();
+        }}
+      >
+        ?
+      </button>
+      {popover}
+    </span>
+  );
+}
+
 function FieldInput({ model, path, label, kind, choices, placeholder, helper, min, max, step, rows, wide, allowUnset }: FieldSpec & { model: Model }) {
   const value = getAt(model.config, path, "");
   const inferredKind = kind ?? inferFieldKind(path, value);
@@ -841,12 +1178,13 @@ function FieldInput({ model, path, label, kind, choices, placeholder, helper, mi
   }
 
   return (
-    <div className={`field ${changed ? "is-dirty" : ""} ${wide ? "is-wide" : ""}`} data-field-path={path}>
+    <div className={`field ${changed ? "is-dirty" : ""} ${wide ? "is-wide" : ""}`} data-field-path={path} data-kind={inferredKind}>
       <span className="field-title">
         <label htmlFor={id}>{label}</label>
-        <button type="button" className="help-tip" aria-label={`字段说明：${help}`} title={help} onClick={() => model.setSelectedPath(path)}>
-          ?
-        </button>
+        <span className="field-actions">
+          <em>{inferredKind}</em>
+          <HelpTip text={help} onOpen={() => model.setSelectedPath(path)} />
+        </span>
       </span>
       {control}
       <small id={`${id}-help`}>{help}</small>
@@ -1152,9 +1490,7 @@ function ArrayEditor({ model, shared, path, title, itemName }: { model: Model; s
       <div className="array-heading">
         <span className="field-title">
           <strong>{title}</strong>
-          <button className="help-tip" type="button" title={helpFor(path)} aria-label={`字段说明：${helpFor(path)}`}>
-            ?
-          </button>
+          <HelpTip text={helpFor(path)} />
         </span>
         <span className="array-heading-actions">
           <ArrayModeButtons path={path} length={safeItems.length} shared={shared} />
@@ -1336,9 +1672,7 @@ function FieldWithDatalist({ model, path, label, options }: { model: Model; path
     <label className="field">
       <span className="field-title">
         <strong>{label}</strong>
-        <button type="button" className="help-tip" title={helpFor(path)} aria-label={`字段说明：${helpFor(path)}`}>
-          ?
-        </button>
+        <HelpTip text={helpFor(path)} />
       </span>
       <input list={listId} defaultValue={value} onFocus={() => model.setSelectedPath(path)} onBlur={(event) => model.updatePath(path, event.target.value)} />
       <datalist id={listId}>
@@ -1366,9 +1700,7 @@ function TagPicker({ model, path, title, choices }: { model: Model; path: string
     <div className="tag-editor">
       <span className="field-title">
         <strong>{title}</strong>
-        <button className="help-tip" type="button" title={helpFor(path)} aria-label={`字段说明：${helpFor(path)}`}>
-          ?
-        </button>
+        <HelpTip text={helpFor(path)} />
       </span>
       <div className="tag-cloud">
         {choices.length ? (
@@ -1401,9 +1733,7 @@ function ResourceEditor({ model, path, title }: { model: Model; path: string; ti
       <div className="array-heading">
         <span className="field-title">
           <strong>{title}</strong>
-          <button className="help-tip" type="button" title={helpFor(path)} aria-label={`字段说明：${helpFor(path)}`}>
-            ?
-          </button>
+          <HelpTip text={helpFor(path)} />
         </span>
         <button
           className="button secondary"
@@ -1444,9 +1774,7 @@ function ColorStopEditor({ model, shared, path, title, unit }: { model: Model; s
       <div className="array-heading">
         <span className="field-title">
           <strong>{title}</strong>
-          <button className="help-tip" type="button" title={helpFor(path)} aria-label={`字段说明：${helpFor(path)}`}>
-            ?
-          </button>
+          <HelpTip text={helpFor(path)} />
         </span>
         <span className="array-heading-actions">
           <ArrayModeButtons path={path} length={items.length} shared={shared} />
@@ -1512,67 +1840,86 @@ function AdvancedEditor({ model }: { model: Model }) {
   }, [model.config]);
 
   return (
-    <Panel title="完整 JSON / YAML" eyebrow="Advanced Editor" icon={<Braces size={18} />} className="advanced-panel">
-      <div className="segmented" role="tablist" aria-label="高级编辑器切换">
-        <button type="button" className={model.editorTab === "json" ? "is-active" : ""} onClick={() => model.setEditorTab("json")}>
-          JSON 草稿
-        </button>
-        <button
-          type="button"
-          className={model.editorTab === "yaml" ? "is-active" : ""}
-          onClick={() => {
-            model.setEditorTab("yaml");
-            if (!model.yamlText) void model.refreshYaml();
-          }}
-        >
-          YAML 导出
-        </button>
+    <details className="advanced-panel view-panel">
+      <summary className="advanced-summary">
+        <span className="advanced-summary-icon">
+          <Braces size={18} />
+        </span>
+        <span>
+          <small>Power tools</small>
+          <strong>完整 JSON / YAML 工作区</strong>
+          <em>直接审阅完整结构、导入草稿或导出配置文件</em>
+        </span>
+        <span className="advanced-summary-action">
+          展开编辑器
+          <ChevronDown size={17} />
+        </span>
+      </summary>
+      <div className="advanced-body">
+        <div className="editor-header">
+          <div className="segmented" role="tablist" aria-label="高级编辑器切换">
+            <button type="button" className={model.editorTab === "json" ? "is-active" : ""} onClick={() => model.setEditorTab("json")}>
+              JSON 草稿
+            </button>
+            <button
+              type="button"
+              className={model.editorTab === "yaml" ? "is-active" : ""}
+              onClick={() => {
+                model.setEditorTab("yaml");
+                if (!model.yamlText) void model.refreshYaml();
+              }}
+            >
+              YAML 导出
+            </button>
+          </div>
+          <span className="editor-language">{model.editorTab === "json" ? "application/json" : "application/yaml"}</span>
+        </div>
+        <div className="editor-toolbar">
+          <button className="button secondary" type="button" onClick={() => setJsonText(model.config ? JSON.stringify(model.config, null, 2) : "")}>
+            <RefreshCcw size={16} />
+            同步 JSON
+          </button>
+          <button
+            className="button secondary"
+            type="button"
+            onClick={() => {
+              try {
+                model.applyJson(jsonText);
+              } catch (error) {
+                window.alert(error instanceof Error ? error.message : String(error));
+              }
+            }}
+          >
+            <UploadCloud size={16} />
+            替换草稿
+          </button>
+          <button className="button secondary" type="button" onClick={() => void model.refreshYaml()}>
+            <RefreshCcw size={16} />
+            刷新 YAML
+          </button>
+          <button className="button secondary" type="button" onClick={() => void model.exportYaml()}>
+            <Download size={16} />
+            导出 YAML
+          </button>
+          <button
+            className="button danger"
+            type="button"
+            onClick={() => {
+              if (window.confirm("放弃草稿并从文件重载？未保存草稿会丢失。")) void model.discardAndReload();
+            }}
+          >
+            <RotateCcw size={16} />
+            放弃并重载
+          </button>
+        </div>
+        <p className="readonly-editor-note">`webapi` 为只读根配置。即使在 JSON 草稿中改动，校验和写入前也会恢复为后端当前值。</p>
+        {model.editorTab === "json" ? (
+          <textarea className="code-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-label="完整 JSON 草稿" />
+        ) : (
+          <textarea className="code-editor" spellCheck={false} readOnly value={model.yamlText} aria-label="YAML 导出预览" />
+        )}
       </div>
-      <div className="editor-toolbar">
-        <button className="button secondary" type="button" onClick={() => setJsonText(model.config ? JSON.stringify(model.config, null, 2) : "")}>
-          <RefreshCcw size={16} />
-          同步 JSON
-        </button>
-        <button
-          className="button secondary"
-          type="button"
-          onClick={() => {
-            try {
-              model.applyJson(jsonText);
-            } catch (error) {
-              window.alert(error instanceof Error ? error.message : String(error));
-            }
-          }}
-        >
-          <UploadCloud size={16} />
-          用 JSON 替换草稿
-        </button>
-        <button className="button secondary" type="button" onClick={() => void model.refreshYaml()}>
-          <RefreshCcw size={16} />
-          刷新 YAML
-        </button>
-        <button className="button secondary" type="button" onClick={() => void model.exportYaml()}>
-          <Download size={16} />
-          导出 YAML
-        </button>
-        <button
-          className="button danger"
-          type="button"
-          onClick={() => {
-            if (window.confirm("放弃草稿并从文件重载？未保存草稿会丢失。")) void model.discardAndReload();
-          }}
-        >
-          <RotateCcw size={16} />
-          放弃并从文件重载
-        </button>
-      </div>
-      <p className="readonly-editor-note">`webapi` 为只读根配置。即使在 JSON 草稿中改动，校验和写入前也会恢复为后端当前值。</p>
-      {model.editorTab === "json" ? (
-        <textarea className="code-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-label="完整 JSON 草稿" />
-      ) : (
-        <textarea className="code-editor" spellCheck={false} readOnly value={model.yamlText} aria-label="YAML 导出预览" />
-      )}
-    </Panel>
+    </details>
   );
 }
 
@@ -1582,39 +1929,56 @@ function Inspector({ model }: { model: Model }) {
   const parent = pathOf(tokenize(model.selectedPath).slice(0, -1));
   return (
     <aside className="inspector motion-item" aria-labelledby="inspector-title">
-      <div className="panel-heading">
+      <div className="inspector-heading">
         <div>
-          <p className="eyebrow">Inspector</p>
-          <h3 id="inspector-title">字段审查</h3>
+          <p className="eyebrow">Field intelligence</p>
+          <h3 id="inspector-title">字段透镜</h3>
         </div>
-        <span className="type-badge">{typeOf(value)}</span>
+        <button className="icon-button" type="button" onClick={() => model.setShowSecrets(!model.showSecrets)} aria-label={model.showSecrets ? "隐藏敏感值" : "显示敏感值"} title={model.showSecrets ? "隐藏敏感值" : "显示敏感值"}>
+          {model.showSecrets ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
       </div>
       <div className="path-card">
-        <span>YAMLPath</span>
+        <span>
+          <span>YAMLPath</span>
+          <span className="type-badge">{typeOf(value)}</span>
+        </span>
         <code>{model.selectedPath}</code>
-        <button className="button secondary full" type="button" onClick={() => void navigator.clipboard.writeText(model.selectedPath)}>
-          <ClipboardCopy size={16} />
+        <button className="path-copy-button" type="button" onClick={() => void navigator.clipboard.writeText(model.selectedPath)}>
+          <ClipboardCopy size={14} />
           复制 YAMLPath
         </button>
       </div>
       <dl className="inspect-list">
         <div>
-          <dt>当前值摘要</dt>
+          <dt>
+            <span>01</span>
+            当前值摘要
+          </dt>
           <dd>{summarize(value, model.selectedPath, model.showSecrets)}</dd>
         </div>
         <div>
-          <dt>风险提示</dt>
-          <dd>{risk || "无"}</dd>
+          <dt>
+            <span>02</span>
+            风险提示
+          </dt>
+          <dd className={risk ? "risk-value" : ""}>{risk || "当前字段未检测到风险"}</dd>
         </div>
         <div>
-          <dt>字段说明</dt>
+          <dt>
+            <span>03</span>
+            字段说明
+          </dt>
           <dd>{helpFor(model.selectedPath)}</dd>
         </div>
       </dl>
-      <label className="field-label" htmlFor="inspector-json">
-        JSON 预览
-      </label>
-      <textarea id="inspector-json" className="code-editor small" readOnly value={JSON.stringify(value, null, 2) ?? ""} />
+      <div className="inspector-code">
+        <label className="field-label" htmlFor="inspector-json">
+          <span>Live preview</span>
+          <code>JSON</code>
+        </label>
+        <textarea id="inspector-json" className="code-editor small" readOnly value={JSON.stringify(value, null, 2) ?? ""} />
+      </div>
       <div className="inspector-actions">
         <button className="button secondary" type="button" disabled={model.selectedPath === "$"} onClick={() => model.restorePath(model.selectedPath)}>
           <Undo2 size={16} />
@@ -1635,10 +1999,7 @@ function Inspector({ model }: { model: Model }) {
           删除字段
         </button>
       </div>
-      <button className="button ghost full" type="button" onClick={() => model.setShowSecrets(!model.showSecrets)}>
-        {model.showSecrets ? <EyeOff size={16} /> : <Eye size={16} />}
-        {model.showSecrets ? "隐藏敏感值" : "显示敏感值"}
-      </button>
+      <p className="inspector-footnote">字段选择会同步到主工作区。敏感值只有在点击右上角眼睛图标后才会显示。</p>
     </aside>
   );
 }
@@ -1647,13 +2008,16 @@ function Panel({ title, eyebrow, icon, children, className = "" }: { title: stri
   return (
     <section className={`panel view-panel ${className}`}>
       <div className="panel-heading">
-        <div>
+        <div className="panel-title">
           <p className="eyebrow">{eyebrow}</p>
           <h3>{title}</h3>
         </div>
-        <span className="panel-icon">{icon}</span>
+        <span className="panel-icon">
+          {icon}
+          <i />
+        </span>
       </div>
-      {children}
+      <div className="panel-content">{children}</div>
     </section>
   );
 }
