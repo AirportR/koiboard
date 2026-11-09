@@ -17,7 +17,6 @@ export function tokenize(path: string): Array<string | number> {
   const source = path.startsWith("$.") ? path.slice(2) : path.replace(/^\$/, "");
   const tokens: Array<string | number> = [];
   let part = "";
-
   for (let index = 0; index < source.length; index += 1) {
     const char = source[index];
     if (char === ".") {
@@ -35,14 +34,13 @@ export function tokenize(path: string): Array<string | number> {
     }
     part += char;
   }
-
   if (part) tokens.push(part);
   return tokens;
 }
 
 export function pathOf(tokens: Array<string | number>): string {
   if (!tokens.length) return "$";
-  return tokens.reduce<string>((path, token) => (typeof token === "number" ? `${path}[${token}]` : `${path}.${token}`), "$");
+  return tokens.reduce<string>((path, token) => (typeof token === "number" ? path + "[" + token + "]" : path + "." + token), "$");
 }
 
 export function getAt<T = unknown>(root: unknown, path: string, fallback?: T): T {
@@ -57,6 +55,18 @@ export function getAt<T = unknown>(root: unknown, path: string, fallback?: T): T
   }
 }
 
+export function hasAt(root: unknown, path: string): boolean {
+  const tokens = tokenize(path);
+  if (!tokens.length) return true;
+  let current: unknown = root;
+  for (const token of tokens) {
+    if (current === null || typeof current !== "object") return false;
+    if (!Object.prototype.hasOwnProperty.call(current, token)) return false;
+    current = (current as Record<string | number, unknown>)[token];
+  }
+  return true;
+}
+
 export function setAt(root: ConfigObject, path: string, value: unknown): void {
   const tokens = tokenize(path);
   if (!tokens.length) return;
@@ -67,7 +77,7 @@ export function setAt(root: ConfigObject, path: string, value: unknown): void {
     }
     return current[token] as Record<string | number, unknown>;
   }, root);
-  parent[last] = value;
+  parent[last] = value as ConfigValue;
 }
 
 export function deleteAt(root: ConfigObject, path: string): void {
@@ -105,24 +115,24 @@ export function helpFor(path: string, fallback = ""): string {
   if (normalized.startsWith("$.rules[].runtime.")) {
     const runtimePath = normalized.replace("$.rules[].runtime", "$.runtime");
     const runtimeHelp = fieldHelp[runtimePath];
-    if (runtimeHelp) return `规则级覆盖项。${runtimeHelp}`;
+    if (runtimeHelp) return "规则级覆盖项。" + runtimeHelp;
   }
   return (
     fieldHelp[path] ||
     fieldHelp[normalized] ||
     (wildcard ? fieldHelp[wildcard] : "") ||
     fallback ||
-    `字段路径：${path}。修改会先进入本地草稿，校验并保存后生效。`
+    "字段路径：" + path + "。修改会先进入本地草稿，校验并保存后生效。"
   );
 }
 
 export function buildPaths(value: unknown, path = "$", key = "config"): PathNode[] {
   const row: PathNode[] = [{ path, key, type: typeOf(value), value, description: helpFor(path, "") }];
   if (Array.isArray(value)) {
-    value.forEach((item, index) => row.push(...buildPaths(item, `${path}[${index}]`, `[${index}]`)));
+    value.forEach((item, index) => row.push(...buildPaths(item, path + "[" + index + "]", "[" + index + "]")));
   } else if (value && typeof value === "object") {
     Object.entries(value).forEach(([childKey, childValue]) => {
-      const childPath = path === "$" ? `$.${childKey}` : `${path}.${childKey}`;
+      const childPath = path === "$" ? "$." + childKey : path + "." + childKey;
       row.push(...buildPaths(childValue, childPath, childKey));
     });
   }
@@ -137,19 +147,68 @@ export function maskSensitive(value: unknown, path: string, showSecrets: boolean
   const text = String(value ?? "");
   if (!text) return "";
   if (showSecrets || !isSensitive(path) || text.length <= 8) return text;
-  return `${text.slice(0, 3)}${"*".repeat(Math.min(10, text.length - 6))}${text.slice(-3)}`;
+  return text.slice(0, 3) + "*".repeat(Math.min(10, text.length - 6)) + text.slice(-3);
 }
 
 export function summarize(value: unknown, path = "", showSecrets = false): string {
   if (isSensitive(path)) return maskSensitive(value, path, showSecrets);
   const type = typeOf(value);
-  if (type === "object") return `${childCount(value)} 个字段`;
-  if (type === "array") return `${childCount(value)} 项`;
+  if (type === "object") return childCount(value) + " 个字段";
+  if (type === "array") return childCount(value) + " 项";
   if (type === "string") {
     const text = String(value);
-    return text.length > 96 ? `${text.slice(0, 96)}...` : text;
+    return text.length > 96 ? text.slice(0, 96) + "..." : text;
   }
   return String(value);
+}
+
+export interface DiffEntry {
+  path: string;
+  before: unknown;
+  after: unknown;
+}
+
+function walkDiff(a: unknown, b: unknown, path: string, out: DiffEntry[]): void {
+  const typeA = typeOf(a);
+  const typeB = typeOf(b);
+  if (typeA !== typeB) {
+    out.push({ path, before: a, after: b });
+    return;
+  }
+  if (typeA === "object") {
+    const keys = new Set([...Object.keys(a as ConfigObject), ...Object.keys(b as ConfigObject)]);
+    keys.forEach((key) => {
+      const existsA = Object.prototype.hasOwnProperty.call(a, key);
+      const existsB = Object.prototype.hasOwnProperty.call(b, key);
+      if (!existsB) {
+        out.push({ path: path + "." + key, before: (a as ConfigObject)[key], after: undefined });
+        return;
+      }
+      if (!existsA) {
+        out.push({ path: path + "." + key, before: undefined, after: (b as ConfigObject)[key] });
+        return;
+      }
+      walkDiff((a as ConfigObject)[key], (b as ConfigObject)[key], path + "." + key, out);
+    });
+    return;
+  }
+  if (typeA === "array") {
+    const listA = a as ConfigValue[];
+    const listB = b as ConfigValue[];
+    const length = Math.max(listA.length, listB.length);
+    for (let index = 0; index < length; index += 1) {
+      walkDiff(listA[index], listB[index], path + "[" + index + "]", out);
+    }
+    return;
+  }
+  if (a !== b) out.push({ path, before: a, after: b });
+}
+
+export function diffPaths(before: unknown, after: unknown): DiffEntry[] {
+  if (before === undefined || after === undefined) return [];
+  const out: DiffEntry[] = [];
+  walkDiff(before, after, "$", out);
+  return out;
 }
 
 export function riskFor(path: string, value: unknown, root: unknown): string {
@@ -181,12 +240,26 @@ export function dangerousChangeMessage(path: string, value: unknown, root: unkno
 }
 
 export function gradient(list: unknown): string {
-  if (!Array.isArray(list) || !list.length) return "linear-gradient(90deg,#7dd3fc,#2dd4bf,#ff7a45)";
+  if (!Array.isArray(list) || !list.length) return "linear-gradient(90deg,#6ef3c5,#8ab4ff,#ffc46b)";
   const stops = list
     .filter((item): item is Record<string, ConfigValue> => Boolean(item) && typeof item === "object")
     .map((item, index) => {
       const color = typeof item.value === "string" && hexPattern.test(item.value) ? item.value : "#ffffff";
-      return `${color} ${(index / Math.max(list.length - 1, 1)) * 100}%`;
+      return color + " " + (index / Math.max(list.length - 1, 1)) * 100 + "%";
     });
-  return `linear-gradient(90deg, ${stops.join(",")})`;
+  return "linear-gradient(90deg, " + stops.join(",") + ")";
+}
+
+export function pathLabel(path: string): string {
+  return path === "$" ? "根配置" : path.replace(/^\$\./, "").replace(/\[(\d+)\]/g, " #$1");
+}
+
+export function arrayItemSummary(item: unknown, index: number, fallback: string): string {
+  if (item && typeof item === "object") {
+    const record = item as ConfigObject;
+    const name = record.name ?? record.id ?? record.title;
+    if (typeof name === "string" && name) return name;
+  }
+  if (typeof item === "string" && item) return item;
+  return fallback + " " + (index + 1);
 }

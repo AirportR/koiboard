@@ -2,16 +2,18 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#070a09" />
+    <meta name="theme-color" content="#080A0D" />
+    <meta name="description" content="Koiboard Nova — Koipy 配置控制台" />
     <link rel="icon" href="/koipy.ico" type="image/x-icon" />
-    <title>Koiboard V3</title>
+    <title>Koiboard Nova · Koipy 控制台</title>
     <script>
       (() => {
         try {
-          const saved = localStorage.getItem("koiboard.theme");
-          const mode = saved === "light" || saved === "dark" ? saved : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          const param = new URLSearchParams(location.search).get("theme");
+          const saved = localStorage.getItem("koiboard.nova.theme");
+          const mode = param === "light" || param === "dark" ? param : saved === "light" || saved === "dark" ? saved : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
           document.documentElement.dataset.theme = mode;
         } catch {
           document.documentElement.dataset.theme = "dark";

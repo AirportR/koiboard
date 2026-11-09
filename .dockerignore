@@ -1,5 +1,5 @@
-.git
-.github
-dist
 node_modules
-npm-debug.log*
+dist
+shots
+.git
+*.log

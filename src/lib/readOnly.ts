@@ -4,7 +4,7 @@ import type { ConfigObject } from "../types/config";
 const readOnlyRoots = ["$.webapi"];
 
 export function isReadOnlyPath(path: string): boolean {
-  return readOnlyRoots.some((root) => path === root || path.startsWith(`${root}.`) || path.startsWith(`${root}[`));
+  return readOnlyRoots.some((root) => path === root || path.startsWith(root + ".") || path.startsWith(root + "["));
 }
 
 export function preserveReadOnlyConfig(next: ConfigObject, source: ConfigObject | null): ConfigObject {

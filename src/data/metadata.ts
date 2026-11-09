@@ -1,28 +1,38 @@
 import type { FieldSpec, SectionMeta } from "../types/config";
 
 export const storageKeys = {
-  password: "koipy.configAdmin.accessPassword",
-  rememberPassword: "koipy.configAdmin.rememberAccessPassword",
-  apiBase: "koipy.configAdmin.apiBase",
+  password: "koiboard.nova.accessPassword",
+  rememberPassword: "koiboard.nova.rememberPassword",
+  apiBase: "koiboard.nova.apiBase",
+  theme: "koiboard.nova.theme",
+  view: "koiboard.nova.view",
+  dock: "koiboard.nova.dock",
 };
 
 export const sensitivePattern = /(password|token|api-hash|license|secret|key)$/i;
-export const urlPattern = /^(https?:\/\/|socks5:\/\/|ws:\/\/|wss:\/\/|udp:\/\/).+/i;
 export const hexPattern = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
 export const sections: SectionMeta[] = [
-  { id: "dashboard", shortTitle: "总览", title: "总览 Dashboard", hint: "连接、风险、配置规模和常用操作", roots: [] },
-  { id: "basic", shortTitle: "基础", title: "基础与权限", hint: "license、admin、user、log-level", roots: ["license", "admin", "user", "log-level"] },
-  { id: "webapi", shortTitle: "Web API", title: "Web API 只读配置", hint: "只读展示监听、认证、TLS 与跨域", roots: ["webapi"] },
-  { id: "bot", shortTitle: "Bot", title: "Bot 设置", hint: "Telegram Bot、代理、命令、回调", roots: ["bot", "callbacks"] },
-  { id: "network", shortTitle: "网络", title: "网络与订阅", hint: "代理、User-Agent、subconverter", roots: ["network", "subconverter"] },
-  { id: "runtime", shortTitle: "运行时", title: "测试运行时", hint: "测速线程、文件、输出与实时行为", roots: ["runtime"] },
-  { id: "scripts", shortTitle: "脚本", title: "脚本配置", hint: "脚本列表、排序与代码内容", roots: ["scriptConfig"] },
-  { id: "slaves", shortTitle: "后端", title: "后端配置", hint: "slaveConfig、健康检查和节点参数", roots: ["slaveConfig"] },
-  { id: "rules", shortTitle: "规则", title: "测试规则", hint: "规则卡片、订阅 URL、后端与脚本", roots: ["rules"] },
-  { id: "appearance", shortTitle: "外观", title: "图片颜色与水印", hint: "image 颜色、速度/延迟渐变、水印预览", roots: ["image"] },
-  { id: "translation", shortTitle: "本地化", title: "本地化配置", hint: "translation.lang、translation.resources", roots: ["translation"] },
+  { id: "dashboard", index: "01", title: "概览", shortTitle: "概览", hint: "连接状态、配置规模、风险与改动", group: "overview", icon: "Gauge", roots: [] },
+  { id: "basic", index: "02", title: "基础与权限", shortTitle: "基础", hint: "授权、管理员、用户名单与日志等级", group: "connect", icon: "ShieldCheck", roots: ["license", "admin", "user", "log-level"] },
+  { id: "webapi", index: "03", title: "Web API", shortTitle: "接口", hint: "只读的监听、认证、TLS 与跨域配置", group: "connect", icon: "RadioTower", roots: ["webapi"] },
+  { id: "bot", index: "04", title: "Bot 行为", shortTitle: "Bot", hint: "Telegram 凭据、代理、命令与回调", group: "connect", icon: "Bot", roots: ["bot", "callbacks"] },
+  { id: "network", index: "05", title: "网络与订阅", shortTitle: "网络", hint: "出口代理、User-Agent 与订阅转换", group: "connect", icon: "Globe", roots: ["network", "subconverter"] },
+  { id: "runtime", index: "06", title: "测试运行时", shortTitle: "运行时", hint: "全局测速参数，可被规则单独覆盖", group: "pipeline", icon: "Timer", roots: ["runtime"] },
+  { id: "scripts", index: "07", title: "脚本", shortTitle: "脚本", hint: "脚本清单、执行顺序与源码", group: "pipeline", icon: "FileCode", roots: ["scriptConfig"] },
+  { id: "slaves", index: "08", title: "测速后端", shortTitle: "后端", hint: "slave 节点、健康检查与调度", group: "pipeline", icon: "ServerCog", roots: ["slaveConfig"] },
+  { id: "rules", index: "09", title: "测试规则", shortTitle: "规则", hint: "订阅、后端、脚本与运行时覆盖", group: "pipeline", icon: "ListChecks", roots: ["rules"] },
+  { id: "appearance", index: "10", title: "图像外观", shortTitle: "外观", hint: "结果配色、渐变断点与水印", group: "studio", icon: "Palette", roots: ["image"] },
+  { id: "translation", index: "11", title: "本地化", shortTitle: "本地化", hint: "语言包与资源映射", group: "studio", icon: "Languages", roots: ["translation"] },
+  { id: "advanced", index: "12", title: "高级编辑器", shortTitle: "编辑器", hint: "整份草稿的 JSON 编辑与 YAML 预览", group: "studio", icon: "Braces", roots: [] },
 ];
+
+export const groupLabels: Record<string, string> = {
+  overview: "总览",
+  connect: "接入",
+  pipeline: "测试链路",
+  studio: "内容与外观",
+};
 
 export const fieldHelp: Record<string, string> = {
   "$.license": "激活码，必填，否则 Koipy 无法使用。",
@@ -33,7 +43,7 @@ export const fieldHelp: Record<string, string> = {
   "$.network.httpProxy": "HTTP 代理。设置后，Bot 拉取订阅时会使用此代理。",
   "$.network.socks5Proxy": "SOCKS5 代理。Bot 自身代理请在 bot.proxy 中配置。",
   "$.network.userAgent": "订阅获取时使用的 User-Agent。",
-  "$.webapi": "Web 配置管理面板（可选）。",
+  "$.webapi": "Web 配置管理面板（只读）。",
   "$.webapi.enable": "是否启用内置 Web 配置 API 服务，默认 false。",
   "$.webapi.address": "监听地址（host:port）。",
   "$.webapi.password": "访问密码。若设置，Web 端需输入访问密码后才能读写配置。",
@@ -163,30 +173,36 @@ export const scriptReservedNames = [
   ["TEST_HIJACK_DETECTION", "测速劫持检测"],
 ].map(([value, description]) => ({ value, description }));
 
+export const sortChoices = [
+  "订阅原序",
+  "HTTP升序",
+  "HTTP降序",
+  "平均速度升序",
+  "平均速度降序",
+  "最大速度升序",
+  "最大速度降序",
+  "RTT升序",
+  "RTT降序",
+];
+
 export const runtimeFields = (base: string, options: { optional?: boolean; labelPrefix?: string } = {}): FieldSpec[] => {
   const prefix = options.labelPrefix ?? "";
   return [
-    { path: `${base}.entrance`, label: `${prefix}入口检测`, kind: "switch" },
-    { path: `${base}.duration`, label: `${prefix}下载时长`, kind: "number", min: 1, max: 120, step: 1 },
-    { path: `${base}.ipstack`, label: `${prefix}IP 栈检测`, kind: "switch" },
-    { path: `${base}.localip`, label: `${prefix}localip`, kind: "switch" },
-    { path: `${base}.nospeed`, label: `${prefix}nospeed`, kind: "switch" },
-    { path: `${base}.pingURL`, label: `${prefix}Ping URL` },
-    { path: `${base}.speedNodes`, label: `${prefix}测速节点数`, kind: "number", min: 1, max: 2000, step: 1 },
-    { path: `${base}.speedThreads`, label: `${prefix}测速线程`, kind: "number", min: 1, max: 64, step: 1 },
-    { path: `${base}.includeFilter`, label: `${prefix}包含过滤` },
-    { path: `${base}.excludeFilter`, label: `${prefix}排除过滤` },
-    {
-      path: `${base}.sort`,
-      label: `${prefix}排序`,
-      kind: "select",
-      choices: ["订阅原序", "HTTP升序", "HTTP降序", "平均速度升序", "平均速度降序", "最大速度升序", "最大速度降序", "RTT升序", "RTT降序"],
-      allowUnset: options.optional,
-    },
-    { path: `${base}.output`, label: `${prefix}输出模式`, kind: "select", choices: ["image", "json", "video"], allowUnset: options.optional },
-    { path: `${base}.realtime`, label: `${prefix}实时输出`, kind: "switch" },
-    { path: `${base}.disableSubCvt`, label: `${prefix}禁用订阅转换`, kind: "switch" },
-    { path: `${base}.protectContent`, label: `${prefix}保护内容`, kind: "switch" },
-    { path: `${base}.enableDNSInject`, label: `${prefix}DNS 注入`, kind: "switch" },
+    { path: base + ".entrance", label: prefix + "入口检测", kind: "switch", helper: "在结果图顶部显示入口 IP 段。" },
+    { path: base + ".duration", label: prefix + "下载时长", kind: "number", min: 1, max: 120, step: 1, helper: "单位：秒。" },
+    { path: base + ".ipstack", label: prefix + "IP 栈检测", kind: "switch" },
+    { path: base + ".localip", label: prefix + "localip", kind: "switch", helper: "当前版本暂时无用。" },
+    { path: base + ".nospeed", label: prefix + "nospeed", kind: "switch", helper: "当前版本暂时无用。" },
+    { path: base + ".pingURL", label: prefix + "Ping URL", placeholder: "https://www.gstatic.com/generate_204", mono: true },
+    { path: base + ".speedNodes", label: prefix + "测速节点数", kind: "number", min: 1, max: 2000, step: 1 },
+    { path: base + ".speedThreads", label: prefix + "测速线程", kind: "number", min: 1, max: 64, step: 1 },
+    { path: base + ".includeFilter", label: prefix + "包含过滤", placeholder: "保留匹配的节点", mono: true },
+    { path: base + ".excludeFilter", label: prefix + "排除过滤", placeholder: "剔除匹配的节点", mono: true },
+    { path: base + ".sort", label: prefix + "排序", kind: "select", choices: sortChoices, allowUnset: options.optional },
+    { path: base + ".output", label: prefix + "输出模式", kind: "select", choices: ["image", "json", "video"], allowUnset: options.optional },
+    { path: base + ".realtime", label: prefix + "实时输出", kind: "switch" },
+    { path: base + ".disableSubCvt", label: prefix + "禁用订阅转换", kind: "switch" },
+    { path: base + ".protectContent", label: prefix + "保护内容", kind: "switch" },
+    { path: base + ".enableDNSInject", label: prefix + "DNS 注入", kind: "switch" },
   ];
 };

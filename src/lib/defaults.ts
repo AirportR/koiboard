@@ -17,7 +17,7 @@ export function defaultItem(kind: "rule" | "slave" | "script" | "command" | "col
     }),
     script: () => ({ type: "gojajs", name: "NewScript", rank: 0, content: "" }),
     command: () => ({ name: "newcmd", title: "新命令", text: "执行测试", rule: "", enable: true, pin: false, attachToInvite: false }),
-    colorStop: () => ({ label: 0, name: "new", value: "#7dd3fc", alpha: 255, end_color: "#ffffff" }),
+    colorStop: () => ({ label: 0, name: "new", value: "#6ef3c5", alpha: 255, end_color: "#ffffff" }),
     array: () => "",
   };
   return factories[kind]();
@@ -49,7 +49,7 @@ function hslToHex(hue: number, saturation: number, lightness: number): string {
   const rgb = [hueToRgb(p, q, h + 1 / 3), hueToRgb(p, q, h), hueToRgb(p, q, h - 1 / 3)].map((channel) =>
     Math.round(channel * 255).toString(16).padStart(2, "0"),
   );
-  return `#${rgb.join("")}`;
+  return "#" + rgb.join("");
 }
 
 function colorStopLabel(path: string, index: number, count: number): number {

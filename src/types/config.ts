@@ -3,26 +3,12 @@ export type ConfigArray = ConfigValue[];
 export type ConfigObject = { [key: string]: ConfigValue };
 export type ConfigValue = ConfigPrimitive | ConfigArray | ConfigObject;
 
-export type ConfigType =
-  | "array"
-  | "object"
-  | "string"
-  | "number"
-  | "boolean"
-  | "null"
-  | "undefined";
+export type ConfigType = "array" | "object" | "string" | "number" | "boolean" | "null" | "undefined";
 
 export type HealthState = "pending" | "online" | "error";
 export type ValidationState = "idle" | "pass" | "fail";
+export type BusyState = "idle" | "loading" | "validating" | "saving" | "applying" | "exporting";
 export type EditorTab = "json" | "yaml";
-
-export interface SectionMeta {
-  id: SectionId;
-  title: string;
-  shortTitle: string;
-  hint: string;
-  roots: string[];
-}
 
 export type SectionId =
   | "dashboard"
@@ -35,7 +21,21 @@ export type SectionId =
   | "slaves"
   | "rules"
   | "appearance"
-  | "translation";
+  | "translation"
+  | "advanced";
+
+export type SectionGroup = "overview" | "connect" | "pipeline" | "studio";
+
+export interface SectionMeta {
+  id: SectionId;
+  index: string;
+  title: string;
+  shortTitle: string;
+  hint: string;
+  group: SectionGroup;
+  icon: string;
+  roots: string[];
+}
 
 export interface PathNode {
   path: string;
@@ -57,10 +57,12 @@ export interface ToastMessage {
   tone: "success" | "warning" | "error" | "info";
 }
 
+export type FieldKind = "text" | "secret" | "number" | "switch" | "textarea" | "select" | "color" | "tags" | "readonly";
+
 export interface FieldSpec {
   path: string;
   label: string;
-  kind?: "text" | "secret" | "number" | "switch" | "textarea" | "select" | "color";
+  kind?: FieldKind;
   choices?: string[];
   placeholder?: string;
   helper?: string;
@@ -70,4 +72,5 @@ export interface FieldSpec {
   rows?: number;
   wide?: boolean;
   allowUnset?: boolean;
+  mono?: boolean;
 }

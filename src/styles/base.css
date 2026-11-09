@@ -1,0 +1,288 @@
+/* ============================================================
+   Koiboard Nova — foundation
+   ============================================================ */
+
+:root {
+  --font-sans: "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", ui-monospace, "Menlo", "Consolas", monospace;
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-xl: 22px;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 9px;
+  --rail-w: 78px;
+  --topbar-h: 64px;
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] {
+  --bg: #07090c;
+  --bg-2: #0a0d12;
+  --surface: #0e1319;
+  --surface-2: #121821;
+  --surface-3: #17202a;
+  --glass: rgba(14, 19, 25, 0.78);
+  --glass-strong: rgba(10, 14, 19, 0.92);
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --text: #e8eef3;
+  --text-2: #9aa8b6;
+  --text-3: #6a7887;
+  --mint: #6ef3c5;
+  --mint-ink: #04231b;
+  --mint-soft: rgba(110, 243, 197, 0.13);
+  --mint-line: rgba(110, 243, 197, 0.32);
+  --iris: #9f8cff;
+  --iris-soft: rgba(159, 140, 255, 0.14);
+  --sky: #7cd4fd;
+  --amber: #ffc46b;
+  --amber-soft: rgba(255, 196, 107, 0.13);
+  --coral: #ff7a85;
+  --coral-soft: rgba(255, 122, 133, 0.13);
+  --shadow-lg: 0 28px 70px -38px rgba(0, 0, 0, 0.95);
+  --shadow-md: 0 16px 40px -28px rgba(0, 0, 0, 0.9);
+  --inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --glow-mint: 0 0 0 1px rgba(110, 243, 197, 0.28), 0 8px 26px -12px rgba(110, 243, 197, 0.35);
+  --grid-line: rgba(255, 255, 255, 0.028);
+  --scroll-thumb: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f5f4;
+  --bg-2: #e9eeed;
+  --surface: #ffffff;
+  --surface-2: #f6f8f8;
+  --surface-3: #edf1f1;
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-strong: rgba(255, 255, 255, 0.95);
+  --line: rgba(12, 27, 24, 0.09);
+  --line-strong: rgba(12, 27, 24, 0.18);
+  --text: #0c1614;
+  --text-2: #4d5f5b;
+  --text-3: #5c6d68;
+  --mint: #0b9c76;
+  --mint-ink: #ffffff;
+  --mint-soft: rgba(11, 156, 118, 0.1);
+  --mint-line: rgba(11, 156, 118, 0.3);
+  --iris: #6d55e0;
+  --iris-soft: rgba(109, 85, 224, 0.1);
+  --sky: #1878a8;
+  --amber: #9a6410;
+  --amber-soft: rgba(196, 132, 26, 0.12);
+  --coral: #c8374a;
+  --coral-soft: rgba(200, 55, 74, 0.1);
+  --shadow-lg: 0 28px 60px -34px rgba(18, 42, 36, 0.4);
+  --shadow-md: 0 16px 34px -26px rgba(18, 42, 36, 0.35);
+  --inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glow-mint: 0 0 0 1px rgba(11, 156, 118, 0.25), 0 8px 24px -14px rgba(11, 156, 118, 0.45);
+  --grid-line: rgba(12, 27, 24, 0.035);
+  --scroll-thumb: rgba(12, 27, 24, 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 38% at 8% 0%, rgba(110, 243, 197, 0.1), transparent 62%),
+    radial-gradient(42% 34% at 92% 4%, rgba(159, 140, 255, 0.1), transparent 64%),
+    radial-gradient(48% 40% at 62% 104%, rgba(124, 212, 253, 0.07), transparent 70%),
+    var(--bg);
+}
+
+:root[data-theme="light"] body::before {
+  background:
+    radial-gradient(46% 38% at 8% 0%, rgba(11, 156, 118, 0.1), transparent 62%),
+    radial-gradient(42% 34% at 92% 4%, rgba(109, 85, 224, 0.09), transparent 64%),
+    radial-gradient(48% 40% at 62% 104%, rgba(24, 120, 168, 0.07), transparent 70%),
+    var(--bg);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(120% 90% at 40% 0%, #000 20%, transparent 78%);
+  -webkit-mask-image: radial-gradient(120% 90% at 40% 0%, #000 20%, transparent 78%);
+}
+
+::selection {
+  background: var(--mint-soft);
+  color: var(--text);
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+code,
+kbd,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  transform: translateY(-160%);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--mint);
+  color: var(--mint-ink);
+  font-weight: 600;
+  transition: transform 0.18s var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+::placeholder {
+  color: var(--text-3);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

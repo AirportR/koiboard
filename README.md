@@ -1,246 +1,184 @@
-# Koiboard V3
+# Koiboard Nova
 
-Koiboard V3 是 Koipy 的独立前端控制台，用于读取、编辑、校验和保存 Koipy 配置。前端只负责 UI、草稿管理和调用 Koipy Web API，不包含后端服务。
+Koipy 的独立前端控制台，完全重写自 Koiboard V3 的 UI 层：同一套 Koipy Web API，重新设计的排版、动效与交互路径。
 
-## 功能范围
+- 只负责 UI、草稿与 API 调用，不含后端
+- 桌面端为「图标轨道 + 命令面板 + 底部草稿坞」，移动端为「底部标签栏 + 全屏导航」
+- 键盘优先：⌘K 搜索任意字段、⌘S 保存、⌘Z 撤销
+- 内置演示模式，无需后端即可完整体验
 
-- 读取 Koipy 运行态配置并生成本地草稿
-- 按配置分类编辑 `license`、`bot`、`runtime`、`rules`、`slaveConfig`、`scriptConfig`、`image`、`translation` 等字段
-- 校验草稿、写入内存、保存到 `config.yaml`、保存并重载
-- 预览和导出 YAML
-- 全局搜索 YAMLPath（`Ctrl+K` / `⌘K` 聚焦搜索框）
-- 字段说明、风险提示、敏感值脱敏
-- 深色 / 浅色主题切换，选择结果保存在 `localStorage`，首次访问跟随系统配色
-- 顶部常驻连接与认证状态、最后同步时间、本地改动计数
-- `webapi` 配置只读展示，不能通过前端修改或删除
+## 预览
 
-## 环境要求
+| 桌面 · 总览 | 桌面 · 规则 | 桌面 · 外观 |
+| --- | --- | --- |
+| ![总览](docs/preview/dashboard.png) | ![规则](docs/preview/rules.png) | ![外观](docs/preview/appearance.png) |
 
-- Node.js 20+ 或 22+
-- npm
-- 一个已启动的 Koipy 后端，并启用 `webapi`
+| 浅色主题 | 移动端 · 总览 | 移动端 · 规则 |
+| --- | --- | --- |
+| ![浅色](docs/preview/dashboard-light.png) | ![移动总览](docs/preview/mobile-dashboard.png) | ![移动规则](docs/preview/mobile-rules.png) |
 
-建议使用锁文件安装依赖：
+## 设计取向
+
+1. **一眼一层**：总览只回答「连上了吗、有多大、有没有风险、改了什么」；细节留在分区里。
+2. **渐进披露**：列表用可展开行，复杂覆盖项（规则 runtime）只显示显式设置的键，其余继承全局。
+3. **状态可见**：连接灯、延迟火花线、字段级未保存圆点、底部草稿坞、敏感性提示。
+4. **手感优先**：统一 150–300ms 缓动、展开动画、视图切换与滚动重置，全部尊重 `prefers-reduced-motion`。
+5. **随手可回退**：整份草稿的撤销/重做、单字段还原、全部还原、丢弃并重载。
+
+## 功能
+
+- 从 Koipy 运行态读取配置并生成本地草稿
+- 覆盖全部配置分区：`license` / `admin` / `user` / `log-level`、`webapi`（只读）、`bot` + `callbacks`、`network` + `subconverter`、`runtime`、`scriptConfig`、`slaveConfig`、`rules`、`image`、`translation`
+- 校验草稿、写入内存、保存到 `config.yaml`、保存并重载、丢弃草稿并重载
+- 规则级 runtime 覆盖编辑器（键级增删，继承全局）
+- 指令 / 脚本 / 后端 / 规则的可展开行编辑，支持新增、复制、排序、删除
+- 图像配色：背景、延迟与速度断点，渐变实时预览 + 一键生成配色
+- 字段搜索、字段详情抽屉（说明 / 类型 / 当前值 / 运行态值 / 风险）
+- 敏感字段默认脱敏，可临时显示；`webapi` 根配置只读保护
+- JSON 整份草稿编辑（语法检查 / 格式化 / 应用）与 YAML 预览、导出
+- 深色 / 浅色主题，首屏无闪烁，选择写入 `localStorage`
+- 演示模式：内存模拟全部读写，适合评审与截图
+
+## 快速开始
+
+环境：Node.js 20+（建议 22+）与 npm。
 
 ```powershell
 npm ci
+npm run dev -- --host 127.0.0.1 --port 5288
 ```
 
-## 本地开发
+打开 `http://127.0.0.1:5288/`。
 
-在项目目录运行：
-
-```powershell
-npm run dev -- --host 127.0.0.1 --port 5173
-```
-
-浏览器访问：
+先看效果（无需 Koipy）：
 
 ```text
-http://127.0.0.1:5173/
+http://127.0.0.1:5288/?demo=1&theme=dark
 ```
 
-如果 Koipy API 和前端不同源，需要在 Koipy 配置里把前端来源加入：
+演示模式也支持 `?view=rules`、`?panel=palette|nav|connect` 深链，便于分享具体界面。
+
+## 连接 Koipy
+
+1. 顶部「连接设置」（或命令面板里的「连接设置」）填写：
+   - **API 地址**：同源部署留空；跨域部署填写 `http://127.0.0.1:8899`
+   - **访问密码**：对应 `webapi.password`
+2. 勾选「记住密码」才会写入 `localStorage`，取消勾选立即清除。
+3. 连接成功后自动读取 `GET /api/config`。
+
+跨域时必须在 Koipy 配置里放行前端来源：
 
 ```yaml
 webapi:
   allowOrigins:
-    - http://127.0.0.1:5173
+    - http://127.0.0.1:5288
 ```
 
-## 连接 Koipy API
+## 写入语义
 
-页面顶部有两个连接配置：
+| 操作 | 接口 | 影响 |
+| --- | --- | --- |
+| 写入内存 | `PUT /api/config` | 只更新运行态，不写文件 |
+| 保存 | `POST /api/config/apply` `mode=save` | 校验 → 内存 → `config.yaml` |
+| 保存并重载 | `mode=save_reload` | 写文件并让 Koipy 重新加载 |
+| 丢弃并重载 | `mode=discard_reload` | 丢弃草稿，从文件恢复 |
 
-- `API 地址`：留空时使用同源 API；跨域部署时填写 Koipy Web API 地址，例如 `http://127.0.0.1:8899`
-- `访问密码`：对应 Koipy 配置里的 `webapi.password`
+底部草稿坞会在存在未保存改动或任务进行时出现，保存实时显示阶段（校验 / 写入 / 应用）。
 
-也可以用 URL 参数预设 API 地址：
+## 快捷键
+
+| 快捷键 | 动作 |
+| --- | --- |
+| `⌘K` / `Ctrl+K` | 打开命令面板（字段、视图、操作、改动） |
+| `⌘S` / `Ctrl+S` | 保存 |
+| `⇧⌘S` | 保存并重载 |
+| `⌘↵` | 校验草稿 |
+| `⌘Z` / `⇧⌘Z` | 撤销 / 重做（输入框内保留原生行为） |
+| `Esc` | 关闭面板、抽屉、导航 |
+
+移动端：底部标签栏切换「概览 / 规则 / 后端 / Bot」，第五项「更多」打开全屏导航；顶部仅保留搜索与保存，其他操作收进命令面板。
+
+## 目录结构
 
 ```text
-http://127.0.0.1:5173/?apiBase=http://127.0.0.1:8899
+src/
+  App.tsx                     # 壳层：路由、主题、快捷键、面板编排
+  components/
+    Shell.tsx                 # 轨道导航、顶栏、移动标签栏、草稿坞、导航弹层
+    CommandPalette.tsx        # ⌘K 命令面板
+    Inspector.tsx             # 字段详情抽屉
+    Field.tsx                 # 字段渲染与 ConfigBinding 契约
+    Row.tsx                   # 可展开行
+    ChipPicker.tsx            # 多选 chip / 手动追加
+    RuntimeOverrides.tsx      # 规则级 runtime 覆盖编辑器
+    ArrayEditor.tsx           # 字符串数组编辑器
+    Connect.tsx               # 连接表单
+    ui.tsx / icons.tsx        # 基础组件与图标注册表
+  views/                      # 12 个分区视图
+  hooks/
+    useKoipyConfig.ts         # 草稿生命周期、历史、校验、保存、演示开关
+    useToasts.ts              # 通知队列
+  lib/
+    api.ts                    # 地址规范化、请求头、演示拦截、导出
+    configPath.ts             # YAMLPath 读写、差异、脱敏、风险、帮助
+    readOnly.ts               # webapi 只读保护
+    defaults.ts               # 新增项与配色生成
+    yaml.ts                   # 草稿序列化为 YAML
+    mock.ts                   # 演示配置
+  data/metadata.ts            # 分区、字段说明、保留脚本名、runtime schema
+  styles/                     # base / layout / components 三层样式
+tools/test.mjs                # 交互回归脚本（Playwright + 本机 Edge）
+docs/design-system.md         # 设计系统与交互规范
+docs/api.md                   # API 契约与演示模式说明
 ```
 
-密码只会保存在当前浏览器的 `localStorage` 中，且只有勾选“记住密码”时才会持久化。
+## 与旧版的关系
 
-## 构建
+- 复用：API 契约、YAMLPath 逻辑、字段说明、默认值、只读保护、脱敏规则。
+- 重写：全部页面结构、样式系统、导航、编辑交互、动效、移动端布局。
+- 增强：命令面板、字段级差异与撤销重做、规则 runtime 键级覆盖、移动端底部导航、演示模式、草稿序列化 YAML、保存后敏感变更提示。
 
-生产构建：
+## 部署
+
+静态构建：
 
 ```powershell
 npm run build
 ```
 
-构建产物会输出到：
+产物在 `dist/`。推荐同源反向代理：
 
 ```text
-dist/
+https://example.com/        -> dist/
+https://example.com/api/*   -> Koipy Web API
 ```
 
-本地预览构建产物：
-
-```powershell
-npm run preview -- --host 127.0.0.1 --port 4173
-```
-
-## 发布部署
-
-Koiboard V3 是静态前端，发布时只需要部署 `dist/`。
-
-常见部署方式：
-
-- Nginx / Caddy / Apache 静态站点
-- Vercel / Netlify / Cloudflare Pages
-- Docker / Docker Compose（本仓库已内置）
-- 和 Koipy Web API 放在同一域名下，由反向代理分发
-
-推荐同源反向代理结构：
-
-```text
-https://example.com/          -> Koiboard V3 dist/
-https://example.com/api/*     -> Koipy Web API
-```
-
-如果前端和 Koipy API 分离部署，必须在 `webapi.allowOrigins` 中加入前端 origin。不要用不受控的通配来源暴露管理 API。
-
-### Docker 部署
-
-仓库内置了 `Dockerfile`、`docker-compose.yml` 和 `nginx.conf.example`，用于「Nginx + 静态资源 + 反向代理 Koipy Web API」的一体化部署。
-
-首次使用先复制一份本地 Nginx 配置：
+Nginx 模板见 `nginx.conf.example`（含 `/api/` 代理与 SPA 回退）。Docker：
 
 ```powershell
 Copy-Item nginx.conf.example nginx.conf
-```
-
-然后编辑 `nginx.conf`，至少修改这些地方：
-
-- `server_name`：改成自己的域名
-- `ssl_certificate` / `ssl_certificate_key`：指向自己的证书路径（compose 默认挂载 `/root/koipy_cert` 到 `/etc/nginx/tls`）
-- `$http_x_access_password != "..."`：把占位符替换成真实的 `webapi.password`，Nginx 会在转发到 Koipy 前校验该密码
-
-构建并启动：
-
-```powershell
 docker compose up -d --build
 ```
 
-`docker-compose.yml` 使用 `network_mode: host`，Nginx 通过 `127.0.0.1:8899` 访问宿主机上的 Koipy Web API，因此 Koipy 只需监听本机回环地址。健康检查请求 `/healthz`，正常返回 `ok`。
+## 开发与校验
 
-> `nginx.conf` 含明文访问密码，已加入 `.gitignore`，**不要提交到仓库**。需要改代理规则时，请同步更新 `nginx.conf.example`（其中密码位置保持占位符）。
+```powershell
+npm run build          # tsc + vite build
+npm run preview        # 默认 http://127.0.0.1:5289
+npm run smoke          # 交互回归（需要本机 Edge 与已启动的 preview）
+```
 
-## 安全注意
-
-- `webapi.password` 应设置强密码
-- 生产环境建议使用 HTTPS 或放在受信任反向代理后
-- 不要把 Koipy Web API 直接暴露到公网且无访问控制
-- `webapi` 在本前端中只读：UI 不提供编辑控件；高级 JSON 即使修改了 `webapi`，校验和写入前也会恢复为后端当前值
-- 敏感字段默认脱敏显示，可在右侧 Inspector 中临时切换显示
-- 部署用的 `nginx.conf` 含明文访问密码，只保留在本机；仓库里只提交 `nginx.conf.example` 占位版本
-- 前端记住的访问密码只存在当前浏览器 `localStorage`，换设备或清缓存后需要重新输入
+回归脚本覆盖：草稿出现 / 撤销重做 / 校验 / 保存 / 新增与删除规则 / runtime 覆盖增删 / 命令面板 / 抽屉 / 行展开 / 移动端布局与导航 / 运行时错误。
 
 ## 维护指南
 
-主要目录：
+新增一个配置分区：
 
-```text
-src/App.tsx                 # React 页面和组件
-src/data/metadata.ts        # 分区、字段说明、脚本保留名、字段 schema
-src/hooks/useKoipyConfig.ts # 加载、草稿、校验、保存、导出等状态逻辑
-src/lib/api.ts              # API 地址、请求头、请求封装、YAML 导出
-src/lib/configPath.ts       # YAMLPath 解析、读写、摘要、风险提示
-src/lib/defaults.ts         # 新增规则/后端/脚本/命令/颜色断点默认值
-src/lib/readOnly.ts         # 只读根配置保护，目前保护 $.webapi
-src/types/config.ts         # 共享类型定义
-index.html                  # 入口 HTML，含首屏主题初始化脚本
-Dockerfile                  # 多阶段构建：node 构建 dist，nginx 托管
-docker-compose.yml          # 一体化部署编排
-nginx.conf.example          # 反向代理模板（密码为占位符）
-docs/extracted-logic.md     # 从旧项目前端提取出的逻辑说明
-```
+1. `src/types/config.ts` 的 `SectionId` 增加 id
+2. `src/data/metadata.ts` 的 `sections` 增加元数据（编号、分组、图标、roots）
+3. `src/views/` 新建视图（接收 `model`、`binding`、`onInspect`）
+4. `src/App.tsx` 的 `viewMap` 注册
+5. 需要默认项时补 `src/lib/defaults.ts`；禁止前端写入时补 `src/lib/readOnly.ts`
+6. `npm run build` + 回归脚本
 
-主题与搜索：
-
-- 主题模式存于 `localStorage` 的 `koiboard.theme`（`dark` / `light`）
-- `index.html` 里的内联脚本在首屏渲染前写入 `data-theme`，避免深色/浅色闪烁
-- 导航和视图样式都基于 `[data-theme]` 选择器覆盖，新增样式请同时提供浅色版本
-
-字段说明维护：
-
-- 优先参考 Koipy 的 `resources/config.example.yaml`
-- 真实字段结构以 Koipy 当前 `config.yaml` 和 `/api/config` 返回值为准
-- 修改字段路径时，同步更新 `src/data/metadata.ts`、相关视图组件和 `src/lib/configPath.ts` 中的风险规则
-
-新增配置区块的建议步骤：
-
-1. 在 `src/types/config.ts` 增加 `SectionId`
-2. 在 `src/data/metadata.ts` 增加 `sections` 项和字段说明
-3. 在 `src/App.tsx` 增加对应视图组件
-4. 如果字段需要默认新增项，补充 `src/lib/defaults.ts`
-5. 如果字段禁止前端修改，加入 `src/lib/readOnly.ts`
-6. 运行 `npm run build`
-
-依赖维护：
-
-```powershell
-npm audit
-npm outdated
-npm run build
-```
-
-升级依赖后提交 `package.json` 和 `package-lock.json`。
-
-## Git 工作流
-
-查看状态：
-
-```powershell
-git status --short
-```
-
-提交前至少运行：
-
-```powershell
-npm run build
-```
-
-建议提交信息沿用当前格式：
-
-```text
-:lock: make webapi read-only in frontend
-:tada: initialize koiboard v3
-```
-
-## 常见问题
-
-### 页面连接失败
-
-检查：
-
-- Koipy 是否启动
-- `webapi.enable` 是否为 `true`
-- `API 地址` 是否正确
-- 访问密码是否匹配 `webapi.password`
-- 跨域部署时 `webapi.allowOrigins` 是否包含当前前端 origin
-
-### 浏览器提示 CORS
-
-把前端来源加入 Koipy 配置：
-
-```yaml
-webapi:
-  allowOrigins:
-    - http://127.0.0.1:5173
-```
-
-保存并重载 Koipy 后再刷新前端。
-
-### 保存后配置没有变化
-
-确认你点的是：
-
-- `写入内存`：只更新运行态，不一定写入文件
-- `保存`：写入 `config.yaml`
-- `保存并重载`：写入 `config.yaml` 并让 Koipy 重新加载
-
-另外，`webapi` 是只读保护字段，前端不会写入它的改动。
+字段说明优先参考 Koipy 的 `resources/config.example.yaml` 与真实 `/api/config` 返回；修改字段路径时同步 `metadata.ts`、对应视图与 `configPath.ts` 的风险规则。

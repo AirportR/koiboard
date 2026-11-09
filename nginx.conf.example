@@ -1,86 +1,36 @@
-map $http_cf_connecting_ip $koipy_client_ip {
-    default $http_cf_connecting_ip;
-    ""      $remote_addr;
-}
-
-limit_req_zone $koipy_client_ip zone=koipy_api:10m rate=30r/m;
-
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    server_name panel.koipy.dev;
-
-    server_tokens off;
-
-    location = /healthz {
-        access_log off;
-        add_header Content-Type text/plain;
-        return 200 "ok\n";
-    }
-
-    location / {
-        return 308 https://$host$request_uri;
-    }
-}
-
-server {
-    listen 443 ssl default_server;
-    listen [::]:443 ssl default_server;
-    http2 on;
-    server_name panel.koipy.dev;
-
-    ssl_certificate /etc/nginx/tls/panel.koipy.dev.pem;
-    ssl_certificate_key /etc/nginx/tls/panel.koipy.dev.key;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 1d;
-    ssl_session_tickets off;
+    listen 80;
+    server_name board.example.com;
 
     root /usr/share/nginx/html;
     index index.html;
-    server_tokens off;
 
-    add_header Strict-Transport-Security "max-age=31536000" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-Frame-Options "DENY" always;
-    add_header Referrer-Policy "no-referrer" always;
-    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    # 静态资源
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
 
+    # 健康检查
     location = /healthz {
         access_log off;
         add_header Content-Type text/plain;
-        return 200 "ok\n";
+        return 200 "ok";
     }
 
-    location ~ ^/api/(health|config|config/export|config/validate|config/apply)$ {
-        limit_req zone=koipy_api burst=10 nodelay;
-        limit_req_status 429;
-
-        if ($http_x_access_password != "CHANGE_ME_SET_YOUR_WEBAPI_PASSWORD") {
-            return 401;
-        }
-
+    # 同源反向代理到 Koipy Web API（推荐做法）
+    location /api/ {
+        proxy_pass http://127.0.0.1:8899;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_connect_timeout 10s;
+        proxy_set_header X-Access-Password $http_x_access_password;
         proxy_read_timeout 120s;
-        proxy_send_timeout 120s;
-        proxy_pass http://127.0.0.1:8899;
     }
 
-    location /api/ {
-        return 404;
-    }
-
-    location /assets/ {
-        try_files $uri =404;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
+    # SPA 回退
     location / {
         try_files $uri $uri/ /index.html;
     }
