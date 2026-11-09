@@ -63,7 +63,7 @@ export default function BotView({ model, binding }: ViewProps) {
                   { path: "$.bot.bypassMode", label: "旁路模式", kind: "switch", helper: "开启后内置指令失效，仅生效 commands。" },
                   { path: "$.bot.autoResetCommands", label: "自动重置指令", kind: "switch", wide: true },
                   { path: "$.bot.cacheTime", label: "订阅缓存（秒）", kind: "number", min: 0, step: 1 },
-                  { path: "$.bot.echoLimit", label: "响应限速（秒）", kind: "number", min: 0, step: 1 },
+                  { path: "$.bot.echoLimit", label: "响应限速（秒）", kind: "number", min: 0, step: 0.1, helper: "可填小数，例如 0.8。" },
                 ]}
                 binding={binding}
               />

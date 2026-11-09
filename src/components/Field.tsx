@@ -26,13 +26,14 @@ function inferKind(value: unknown): FieldKind {
   return "text";
 }
 
-function NumberInput({ value, onChange, spec }: { value: unknown; onChange: (next: number) => void; spec: FieldSpec }) {
+function NumberInput({ id, value, onChange, spec }: { id?: string; value: unknown; onChange: (next: number) => void; spec: FieldSpec }) {
   const [text, setText] = useState(String(value ?? ""));
   useEffect(() => {
     setText(String(value ?? ""));
   }, [value]);
   return (
     <input
+      id={id}
       className="input input--mono"
       type="number"
       inputMode="numeric"
@@ -54,7 +55,7 @@ function NumberInput({ value, onChange, spec }: { value: unknown; onChange: (nex
   );
 }
 
-function TagInput({ value, onChange, placeholder }: { value: string[]; onChange: (next: string[]) => void; placeholder?: string }) {
+function TagInput({ id, value, onChange, placeholder }: { id?: string; value: string[]; onChange: (next: string[]) => void; placeholder?: string }) {
   const [draft, setDraft] = useState("");
   const commit = () => {
     const text = draft.trim();
@@ -80,6 +81,7 @@ function TagInput({ value, onChange, placeholder }: { value: string[]; onChange:
         </span>
       ))}
       <input
+        id={id}
         value={draft}
         placeholder={placeholder ?? "输入后回车添加"}
         onChange={(event) => setDraft(event.target.value)}
@@ -91,7 +93,7 @@ function TagInput({ value, onChange, placeholder }: { value: string[]; onChange:
   );
 }
 
-function ColorInput({ value, onChange }: { value: unknown; onChange: (next: string) => void }) {
+function ColorInput({ id, value, onChange }: { id?: string; value: unknown; onChange: (next: string) => void }) {
   const text = typeof value === "string" ? value : "";
   const safe = /^#[0-9a-f]{3,8}$/i.test(text) ? text : "#6ef3c5";
   return (
@@ -105,15 +107,16 @@ function ColorInput({ value, onChange }: { value: unknown; onChange: (next: stri
           aria-label="颜色选择器"
         />
       </label>
-      <input className="input input--mono" value={text} onChange={(event) => onChange(event.target.value)} spellCheck={false} />
+      <input id={id} className="input input--mono" value={text} onChange={(event) => onChange(event.target.value)} spellCheck={false} />
     </div>
   );
 }
 
-function SecretInput({ value, onChange, revealed, onToggle }: { value: unknown; onChange: (next: string) => void; revealed: boolean; onToggle: () => void }) {
+function SecretInput({ id, value, onChange, revealed, onToggle }: { id?: string; value: unknown; onChange: (next: string) => void; revealed: boolean; onToggle: () => void }) {
   return (
     <div className="secret-wrap">
       <input
+        id={id}
         className="input input--mono"
         type={revealed ? "text" : "password"}
         value={asText(value)}
@@ -193,7 +196,7 @@ export function Field({ spec, binding }: { spec: FieldSpec; binding: ConfigBindi
           ))}
         </select>
       ) : kind === "number" ? (
-        <NumberInput value={value} onChange={(next) => binding.set(spec.path, next)} spec={spec} />
+        <NumberInput id={id} value={value} onChange={(next) => binding.set(spec.path, next)} spec={spec} />
       ) : kind === "textarea" ? (
         <textarea
           id={id}
@@ -204,11 +207,12 @@ export function Field({ spec, binding }: { spec: FieldSpec; binding: ConfigBindi
           onChange={(event) => binding.set(spec.path, event.target.value)}
         />
       ) : kind === "color" ? (
-        <ColorInput value={value} onChange={(next) => binding.set(spec.path, next)} />
+        <ColorInput id={id} value={value} onChange={(next) => binding.set(spec.path, next)} />
       ) : kind === "tags" ? (
-        <TagInput value={tags} onChange={(next) => binding.set(spec.path, next)} placeholder={spec.placeholder} />
+        <TagInput id={id} value={tags} onChange={(next) => binding.set(spec.path, next)} placeholder={spec.placeholder} />
       ) : kind === "secret" ? (
         <SecretInput
+          id={id}
           value={value}
           onChange={(next) => binding.set(spec.path, next)}
           revealed={revealed || binding.secrets}

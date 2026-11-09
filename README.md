@@ -28,7 +28,10 @@ Koipy 的独立前端控制台，完全重写自 Koiboard V3 的 UI 层：同一
 ## 功能
 
 - 从 Koipy 运行态读取配置并生成本地草稿
-- 覆盖全部配置分区：`license` / `admin` / `user` / `log-level`、`webapi`（只读）、`bot` + `callbacks`、`network` + `subconverter`、`runtime`、`scriptConfig`、`slaveConfig`、`rules`、`image`、`translation`
+- 覆盖全部配置分区：`license` / `admin` / `user` / `log-level`、`webapi`（只读）、`bot` + `callbacks`、`network` + `subscription.age` + `subconverter`、`runtime`、`scriptConfig`、`slaveConfig`、`rules`、`image`、`translation`
+- 图像外观完整覆盖：速度格式、标题/字体/emoji、7 项背景色对象、12 项状态色、outColor、延迟/速度断点、水印全参数
+- 后端高级连接：mTLS、客户端证书、CA、专属代理、反向连接、上行测速与 DNS 配置
+- 多后端调度与状态展示严格按 Koipy 取值：`concurrent/pipeline/sequential`、`emoji/number/default`
 - 校验草稿、写入内存、保存到 `config.yaml`、保存并重载、丢弃草稿并重载
 - 规则级 runtime 覆盖编辑器（键级增删，继承全局）
 - 指令 / 脚本 / 后端 / 规则的可展开行编辑，支持新增、复制、排序、删除
